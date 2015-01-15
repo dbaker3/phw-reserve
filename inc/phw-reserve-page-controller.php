@@ -1,131 +1,69 @@
 <?php
+/*
+   PHWReservePageController class
+   David Baker, Milligan College 2015
+*/
 
 class PHWReservePageController {
+   private $option_name = 'phwreserve_settings';
+   private $rooms;
+   private $valid_emails;
+
+   // relevant session variables
+   public $sv_phw_room_cal = false;
+   public $sv_phw_new_res = false;
+   public $sv_phw_edit_res = false;
 
    function __construct() {
-      if (isset($_GET['phw_room']) {
-         $room = $_GET['phw_room'];
-         $this->display_room_calendar($room);
+      
+   }
+   
+   function init() {
+      $this->load_plugin_settings();
+      $this->load_session_vars();
+      $this->handle_page_request();
+   }
+   
+   function load_plugin_settings() {
+      $settings = get_option($this->option_name);
+      $this->rooms = json_decode($settings['rooms']);
+      $this->valid_emails = json_decode($settings['valid_emails']);
+   }
+   
+   function load_session_vars() {
+      if (isset($_POST['phw_room_cal']) $this->sv_phw_room_cal = $_POST['phw_room_cal'];
+      if (isset($_POST['phw_new_res']) $this->sv_phw_new_res = $_POST['phw_new_res'];
+      if (isset($_POST['phw_edit_res']) $this->sv_phw_edit_res = $_POST['phw_edit_res'];
+   }
+   
+   function handle_page_request() {
+      if ($this->sv_phw_room_cal) {
+         $this->call_res_calendar();
       }
-      elseif (isset($_GET['phw_new_res']) {
-         $restype = 'new';
-         $this->display_res_form($restype);
+      elseif ($this->sv_phw_new_res) {
+         $this->call_res_form('new');
       }
-      elseif (isset($_GET['phw_edit_res']) {
-         $restype = 'edit';
-         $this->display_res_form($restype);     
+      elseif ($this->sv_phw_edit_res) {
+         $this->call_res_form('edit');     
       }
       else {
-         $this->display_main_menu();
+         $this->call_res_menu();
       }
-      
-   
    }
 
-   function display_main_menu() {
-      $output =  "<div id='phwreserve-mainmenu'>";
-      $output .= "   <ul>";
-      $output .= "      <li><a href="">View Room Calendar</a></li>";
-      $output .= "      <li><a href="">Reserve a Study Room</a></li>";     
-      $output .= "      <li><a href="">Edit or delete an existing reservation</a></li>";
-      $output .= "   </ul>";
-      $output .= "</div>";
-      echo $output;
+   function call_res_menu() {
+      $menu = new PHWReserveMenu($this->rooms);
    }
    
-   function display_res_form() {}
+   function call_res_form($type) {
+      $form = new PHWReserveForm($type);
+   }
    
-   function display_room_calendar() {}
+   function call_res_calendar() {
+      $calendar = new $PHWReserveCalendar($this->sv_phw_room_cal);
+   }
    
-   function validate_inputs() {
-      if(trim($_POST['laylah']) !== '') {
-     		$honeypotError = 'You may not be human, please try again.';
-      	$hasError = true;
-   	}
-
-   	$patron_name = trim($_POST['patron_name']);
-   	if($patron_name === '') {
-   		$nameError = 'You must enter your name.';
-   		$hasError = true;
-   	}
-
-   	$patron_email = strtolower(trim($_POST['patron_email']));
-   	if($patron_email === '') {
-   		$emailError = 'You must enter your email address.';
-   		$hasError = true;
-   	} else if (!eregi("^[a-z0-9._%-]*@.*milligan\.edu$", strtolower(trim($_POST['patron_email'])))) {
-   		$emailError = 'You must enter a valid Milligan email address.';
-   		$hasError = true;
-   	}
-   
-   	$time_date = trim($_POST['time_date']);
-   	$time_date_valid = strtotime($time_date);
-   	if($time_date === '') {
-   		$dateError = 'You must enter a date.';
-   		$hasError = true;
-   	} else if ($time_date_valid === false){
-   		$dateError = 'You must enter a valid date (e.g. 11/4/2012).';
-   		$hasError = true;
-   	} else if ($time_date_valid < strtotime('today')) {
-   		$dateError = 'Please pick a date in the future. Milligan does not allow time travel on campus.';
-   		$hasError = true;
-   	}
-   
-   	$time_start = trim($_POST['time_start']);
-   	$time_start_valid = strtotime($time_start);
-   	if($time_start === '') {
-   		$timeStartError = 'You must enter a start time.';
-   		$hasError = true;
-   	} else if ($time_start_valid === false) {
-   		$timeStartError = 'You must enter a valid start time (e.g. 7:30 PM).';
-   		$hasError = true;
-   	}
-   
-   	$time_end = trim($_POST['time_end']);
-   	$time_end_valid = strtotime($time_end);
-   	if($time_end === '') {
-   		$timeEndError = 'You must enter an end time.';
-   		$hasError = true;
-   	} else if ($time_end_valid === false) {
-   		$timeEndError = 'You must enter a valid end time (e.g. 10:45 PM).';
-   		$hasError = true;
-   	} else if ($time_end_valid <= $time_start_valid) {
-   		$timeEndError = 'Your end time must be later than your start time. You are not a time traveler.';
-   		$hasError = true;
-   	} else if ($time_end_valid - $time_start_valid > 14400 && $time_start_valid !== false) {
-   		$timeEndError = 'You may not reserve a room for more than four hours at a time.';
-   		$hasError = true;
-   	}
-   
-   	$patron_purpose = trim($_POST['patron_purpose']);
-   	if($patron_purpose === '') {
-   		$purposeError = 'Please specify why you wish to use the room.';
-   		$hasError = true;
-   	}
-   
-   	$reserve_room = trim($_POST['reserve_room']);
-   	if($reserve_room === '') {
-   		$roomError = "You must select a room. Select 'Other' if you are unsure.";
-   		$hasError = true;
-   	}
-   
-   	$patron_message = trim($_POST['patron_message']);
-   	if($patron_message === '') {
-   		// If empty string
-   	}
-   } // end function validate_inputs
-
-   
-   
-} // end class PWHReservePageController
-
-
-
-
-
-
-
-
+}
 
 
 

@@ -46,8 +46,6 @@ class PHWReserveSettings {
          add_action('admin_init', array($this, 'register_phwreserve_settings'));
       }
       
-      return $this->settings;
-      
    }
    
    public function register_phwreserve_settings_page() {

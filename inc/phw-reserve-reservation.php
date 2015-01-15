@@ -5,6 +5,7 @@
 */
 
 class PHWReserveReservationRequest {
+   private reservation_id;
    private patron_name;
    private patron_email;
    private datetime_start;
@@ -22,9 +23,9 @@ class PHWReserveReservationRequest {
       $this->purpose = $purpose;
       
       // TODO: Verify email address with conf. code
-      
+
       // TODO: Confirm no time conflict
-      
+
       // TODO: Add reservation to DB
 
       // TODO: Return success/fail boolean
