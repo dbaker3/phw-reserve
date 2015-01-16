@@ -24,7 +24,7 @@ function phw_reserve_create_table() {
             datetime_end datetime NOT NULL default '0000-00-00 00:00:00',
             purpose varchar(100) NOT NULL default '',
             room varchar(100) NOT NULL default '',
-            PRIMARY KEY  (res_id),
+            PRIMARY KEY  (res_id)
             ) $charset_collate; ";
             
    dbDelta($sql_create_table);
@@ -32,4 +32,4 @@ function phw_reserve_create_table() {
 
 add_action( 'init', 'phw_reservations_table', 1 );
 add_action( 'switch_blog', 'phw_reservations_table' );
-register_activation_hook( __FILE__, 'phw_reserve_create_table');
+register_activation_hook(plugin_dir_path(dirname(__FILE__)) . 'phw-reserve.php', 'phw_reserve_create_table');

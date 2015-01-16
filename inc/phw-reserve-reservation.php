@@ -5,13 +5,13 @@
 */
 
 class PHWReserveReservationRequest {
-   private reservation_id;
-   private patron_name;
-   private patron_email;
-   private datetime_start;
-   private datetime_end;
-   private room;
-   private purpose;
+   private $reservation_id;
+   private $patron_name;
+   private $patron_email;
+   private $datetime_start;
+   private $datetime_end;
+   private $room;
+   private $purpose;
    
    function __construct($name, $email, $start, $end, $room, $purpose) {
       

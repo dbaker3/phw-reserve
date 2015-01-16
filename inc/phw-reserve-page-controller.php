@@ -31,9 +31,9 @@ class PHWReservePageController {
    }
    
    function load_session_vars() {
-      if (isset($_POST['phw_room_cal']) $this->sv_phw_room_cal = $_POST['phw_room_cal'];
-      if (isset($_POST['phw_new_res']) $this->sv_phw_new_res = $_POST['phw_new_res'];
-      if (isset($_POST['phw_edit_res']) $this->sv_phw_edit_res = $_POST['phw_edit_res'];
+      if (isset($_POST['phw_room_cal'])) $this->sv_phw_room_cal = $_POST['phw_room_cal'];
+      if (isset($_POST['phw_new_res'])) $this->sv_phw_new_res = $_POST['phw_new_res'];
+      if (isset($_POST['phw_edit_res'])) $this->sv_phw_edit_res = $_POST['phw_edit_res'];
    }
    
    function handle_page_request() {
@@ -65,7 +65,7 @@ class PHWReservePageController {
    
 }
 
-
+/*
 
 	<?php if(isset($emailSent) && $emailSent == true): ?>
 
@@ -116,3 +116,4 @@ class PHWReservePageController {
 		</form>
 	<?php endif; ?>
 
+*/
