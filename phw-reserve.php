@@ -11,6 +11,7 @@ Author URI: https://github.com/dbaker3
 include 'inc/phw-reserve-db-install.php';
 include 'inc/phw-reserve-settings.php';
 include 'inc/phw-reserve-page-controller.php';
+include 'inc/phw-reserve-menu.php';
 include 'inc/phw-reserve-calendar.php';
 include 'inc/phw-reserve-form.php';
 include 'inc/phw-reserve-reservation.php';
@@ -22,4 +23,4 @@ function phw_reserve_shortcode() {
    $phwreserve_ctrlr->init();
 }
 
-add_shortcode('phw-reserve-page-controller', 'phw_reserve_shortcode');
+add_shortcode('phw-reserve-page', 'phw_reserve_shortcode');

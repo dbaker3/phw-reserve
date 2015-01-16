@@ -26,14 +26,14 @@ class PHWReservePageController {
    
    function load_plugin_settings() {
       $settings = get_option($this->option_name);
-      $this->rooms = json_decode($settings['rooms']);
-      $this->valid_emails = json_decode($settings['valid_emails']);
+      $this->rooms = $settings['rooms'];
+      $this->valid_emails = $settings['valid_emails'];
    }
    
    function load_session_vars() {
-      if (isset($_POST['phw_room_cal'])) $this->sv_phw_room_cal = $_POST['phw_room_cal'];
-      if (isset($_POST['phw_new_res'])) $this->sv_phw_new_res = $_POST['phw_new_res'];
-      if (isset($_POST['phw_edit_res'])) $this->sv_phw_edit_res = $_POST['phw_edit_res'];
+      if (isset($_GET['room_cal'])) $this->sv_phw_room_cal = $_GET['room_cal'];
+      if (isset($_GET['res_new'])) $this->sv_phw_new_res = $_GET['res_new'];
+      if (isset($_GET['res_edit'])) $this->sv_phw_edit_res = $_GET['res_edit'];
    }
    
    function handle_page_request() {
