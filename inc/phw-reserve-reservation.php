@@ -22,6 +22,14 @@ class PHWReserveReservationRequest {
       $this->room = $room;
       $this->purpose = $purpose;
       
+      // TESTING
+      echo $name."<br>";
+      echo $email."<br>";
+      echo date('n/j/Y g:i A e', $start)."<br>";
+      echo date('n/j/Y g:i A e', $end)."<br>";
+      echo $room."<br>";
+      echo $purpose."<br>";
+      
       // TODO: Verify email address with conf. code
 
       // TODO: Confirm no time conflict

@@ -14,18 +14,16 @@ class PHWReserveMenu {
 
    function display_menu() {
       $output =  "<div id='phwreserve-mainmenu'>";
-      $output .= "   <ul>";
-      $output .= "      <li>View Room Calendar:";
-      $output .= "         <select id='room-selector'>";
-      $output .= "            <option>Select a room...</option>";
-      foreach ($this->rooms as $room) {
-         $output .= "         <option>{$room}</option>";
-      }
-      $output .= "         </select>";
-      $output .= "      </li>";
-      $output .= "      <li><a href='?res_new=true'>Reserve a Study Room</a></li>";     
-      $output .= "      <li><a href='?res_edit=true'>Change or Cancel a reservation</a></li>";
-      $output .= "   </ul>";
+         $output .= "<p>View Room Calendar: ";
+         $output .= "<select id='room-selector'>";
+            $output .= "<option>Select a room...</option>";
+            foreach ($this->rooms as $room) {
+            $output .= "<option>{$room}</option>";
+            }
+         $output .= "</select>";
+         $output .= "</p>";
+         $output .= "<p><a href='?res_new=true'>Reserve a Study Room</a></p>";     
+         $output .= "<p><a href='?res_edit=true'>Change or Cancel a reservation</a></p>";
       $output .= "</div>";
       
       echo $output;
