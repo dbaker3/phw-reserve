@@ -18,6 +18,7 @@ class PHWReserveMenu {
          $output .= "<select id='room-selector'>";
             $output .= "<option>Select a room...</option>";
             foreach ($this->rooms as $room) {
+            $room = trim($room);
             $output .= "<option>{$room}</option>";
             }
          $output .= "</select>";

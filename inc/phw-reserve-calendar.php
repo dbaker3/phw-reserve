@@ -6,5 +6,10 @@
 
 class PHWReserveCalendar {
 
+   function __construct() {
+   
+   }
+   
+   
 
 }

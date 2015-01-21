@@ -15,6 +15,7 @@ include 'inc/phw-reserve-menu.php';
 include 'inc/phw-reserve-calendar.php';
 include 'inc/phw-reserve-form.php';
 include 'inc/phw-reserve-reservation.php';
+include 'inc/phw-reserve-action.php';
 
 $phwreserve_settings = new PHWReserveSettings();
 

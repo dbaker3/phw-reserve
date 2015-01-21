@@ -49,17 +49,17 @@ class PHWReservePageController {
       
       // Reserve a Room
       elseif ($this->sv_new_res) {
-         $this->call_res_form('new');
+         $this->call_res_form(PHWReserveAction::New_Form, $this->rooms);
       }
       
       // On submit a Reserve room
       elseif ($this->sv_submit_new) {
-         $this->call_res_form('submit_new');
+         $this->call_res_form(PHWReserveAction::Submit_New, $this->rooms);
       }
       
       // Change/Delete Reservation
       elseif ($this->sv_edit_res) {
-         $this->call_res_form('edit');     
+         $this->call_res_form(PHWReserveAction::Edit_Form, $this->rooms);     
       }
       
       // No option
@@ -72,8 +72,8 @@ class PHWReservePageController {
       $menu = new PHWReserveMenu($this->rooms);
    }
    
-   function call_res_form($action) {
-      $form = new PHWReserveForm($action);
+   function call_res_form($action, $rooms) {
+      $form = new PHWReserveForm($action, $rooms);
    }
    
    function call_res_calendar() {
