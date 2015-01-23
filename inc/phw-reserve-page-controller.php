@@ -32,12 +32,12 @@ class PHWReservePageController {
       $this->valid_emails = array_map('trim', explode("\n", $settings['valid_emails']));
    }
    
-   function load_session_vars() {
+   function load_session_vars() {      // TODO: should I preload all of these or just test for them as needed?
       if (isset($_GET['room_cal'])) $this->sv_room_cal = $_GET['room_cal'];
       if (isset($_GET['res_new'])) $this->sv_new_res = $_GET['res_new'];
       if (isset($_GET['res_edit'])) $this->sv_edit_res = $_GET['res_edit'];
       if (isset($_POST['submit_new'])) $this->sv_submit_new = true;
-      if (isset($_POST['auth_code'])) $this->sv_auth_code = $_POST['auth_code'];
+      if (isset($_GET['auth_code'])) $this->sv_auth_code = $_GET['auth_code'];
    }
    
    function handle_page_request() {
@@ -114,15 +114,19 @@ class PHWReservePageController {
    }
    
    private function handle_auth_code_submission() {
-      $transient_data = get_transient($_POST['transient_name']);     // TODO: load all of these session vars
-      $auth_code = $transient_data[6];
-      if ($auth_code == $_POST['auth_code']) {
-                                 // TODO: clean this crap up with keys ------v
-         $reservation = new PHWReserveReservationRequest($transient_data[0], $transient_data[1], $transient_data[2], $transient_data[3], $transient_data[4], $transient_data[5]);
+      $transient_data = get_transient($_GET['transient']);     // TODO: load all of these session vars
+      $auth_code = $transient_data['auth_code'];
+      if ($auth_code == $_GET['auth_code']) {
+         $reservation = new PHWReserveReservationRequest($transient_data['patron_name'], 
+                                                         $transient_data['patron_email'], 
+                                                         $transient_data['datetime_start'], 
+                                                         $transient_data['datetime_end'], 
+                                                         $transient_data['room'], 
+                                                         $transient_data['purpose']);
          $reservation->insert_into_db();
       }
       else {
-         echo 'no match';
+         echo '<p><strong>Error:</strong> Your authorization code does not match this reservation, or your email link has expired. If you belive you have incorrectly received this error, please contact ' . antispambot(get_option('admin_email')) . '</p>';
       }
       
       
