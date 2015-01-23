@@ -8,17 +8,15 @@ class PHWReserveMenu {
    private $rooms;
    
    function __construct($rooms) {
-      $this->rooms = explode("\n", $rooms);
-      $this->display_menu();
+      $this->rooms = $rooms;
    }
 
-   function display_menu() {
+   public function display_menu() {
       $output =  "<div id='phwreserve-mainmenu'>";
          $output .= "<p>View Room Calendar: ";
          $output .= "<select id='room-selector'>";
             $output .= "<option>Select a room...</option>";
             foreach ($this->rooms as $room) {
-            $room = trim($room);
             $output .= "<option>{$room}</option>";
             }
          $output .= "</select>";
