@@ -73,6 +73,9 @@ class PHWReserveForm {
    	} elseif (!in_array(substr($this->patron_email, strrpos($this->patron_email, '@') + 1), $this->valid_emails)) {
          $this->emailError = 'The email address you entered is not authorized to request a reservation.';
          $this->hasError = true;
+      } elseif (!is_email($this->patron_email)) {
+         $this->emailError = 'You must enter a valid email address.';
+         $this->hasError = true;
       }
    
    	if($this->time_date === '') {
@@ -115,7 +118,7 @@ class PHWReserveForm {
    	}
    
    	if($this->reserve_room === '') {
-   		$this->roomError = "You must select a room. Select 'Other' if you are unsure.";
+   		$this->roomError = "You must select a room.";
    		$this->hasError = true;
    	}
    

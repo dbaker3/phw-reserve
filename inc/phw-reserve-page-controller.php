@@ -82,7 +82,7 @@ class PHWReservePageController {
                         $form->patron_email, $begin_time, $end_time, $form->reserve_room, $form->patron_purpose);
          if ($reservation->check_time_conflict()) {
             $form->hasError = true;
-            $form->timeStartError = "Your requested time overlaps with an existing reservation for this room.";
+            $form->timeStartError = "{$form->reserve_room} is already reserved during this time.";
             $form->timeEndError = "";
             $form->display_form();
          }

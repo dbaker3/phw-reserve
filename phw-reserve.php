@@ -1,11 +1,12 @@
 <?php
 /*
 Plugin Name: PHW-Reserve
-Description: Reserve rooms. No account required. Users must have an email account in authorized domain name.
+Description: Reserve rooms. No account required, however users must have an email account in the list of authorized domain names.
 Version: 1.0
 Plugin URI: https://github.com/dbaker3/phw-reserve
 Author: David Baker - Milligan College
 Author URI: https://github.com/dbaker3
+License: GPL2
 */
 
 include 'inc/phw-reserve-db-install.php';
