@@ -1,6 +1,6 @@
 <?php
 /*
-Plugin Name: PHW-Reserve
+Plugin Name: PHW Reserve
 Description: Reserve rooms. No account required, however users must have an email account in the list of authorized domain names.
 Version: 1.0
 Plugin URI: https://github.com/dbaker3/phw-reserve
@@ -18,8 +18,12 @@ include 'inc/phw-reserve-form.php';
 include 'inc/phw-reserve-reservation.php';
 include 'inc/phw-reserve-action.php';
 
-$phwreserve_settings = new PHWReserveSettings();
+PHWReserveSettings::init();
 
+/**
+* Registers shortcode to access plugin from Page or Post
+* @since 1.0
+*/
 function phw_reserve_shortcode() {
    $phwreserve_ctrlr = new PHWReservePageController();
    $phwreserve_ctrlr->init();

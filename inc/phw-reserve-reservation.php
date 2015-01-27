@@ -1,6 +1,10 @@
 <?php
 /**
-* The PHWReserveReservation class
+* Contains PHWReserveReservationRequest class
+*
+* This class represents the reservation request. It verifies date/time, handles
+* authorization of requestor, sends appropriate emails to requestor, and communicates
+* with the WP database table, pwh_reservations.
 * 
 * @author David Baker
 * @copyright 2015 Milligan College
@@ -16,6 +20,7 @@ class PHWReserveReservationRequest {
    private $room;
    private $purpose;
    private $auth_code;
+   private $wpdb;
    
    
    /**
@@ -39,6 +44,10 @@ class PHWReserveReservationRequest {
       $this->datetime_end = $end;
       $this->room = $room;
       $this->purpose = $purpose;
+      
+      global $wpdb;
+      $this->wpdb =& $wpdb;
+      $this->wpdb->phw_reservations = "{$this->wpdb->prefix}phw_reservations";
    }
 
    
@@ -56,23 +65,19 @@ class PHWReserveReservationRequest {
    * @return boolean
    */
    public function check_time_conflict() {
-      global $wpdb;
-
       // confirmed reservations
-      $wpdb->phw_reservations = "{$wpdb->prefix}phw_reservations";
-      $query = "SELECT res_id FROM {$wpdb->phw_reservations}
-                WHERE {$this->datetime_start} < unix_timestamp(datetime_end)
-                AND {$this->datetime_end} > unix_timestamp(datetime_begin)
+      $query = "SELECT res_id FROM {$this->wpdb->phw_reservations}
+                WHERE {$this->datetime_start} < datetime_end
+                AND {$this->datetime_end} > datetime_start
                 AND '{$this->room}' = room";
-      $conflicting = $wpdb->query($query);
-
+      $conflicting = $this->wpdb->query($query);
       // unconfirmed reservations
       if (!$conflicting) {
          $this->delete_expired_transients();
          $query = "SELECT option_name
-                   FROM {$wpdb->prefix}options
+                   FROM {$this->wpdb->prefix}options
                    WHERE option_name LIKE '%transient_phwreserve%'";
-         $results = $wpdb->get_results($query, ARRAY_A);
+         $results = $this->wpdb->get_results($query, ARRAY_A);
          foreach ($results as $result) {
             $option_name = $result['option_name'];
             $transient_name = str_replace('_transient_', '', $option_name);
@@ -159,17 +164,33 @@ class PHWReserveReservationRequest {
 
    
    /**
-   * Insert reservation into phw_reservations table
+   * Insert reservation into phw_reservations table and email confirmation
    *
    * Saves the current reservation request into the table and calls the
    * send_confirmed_email() method 
    *
    * @since 1.0
+   *
+   * @todo database insert
+   * @todo generate URL to edit/delete reservation
+   * @todo send final confirmation email
    */
    public function insert_into_db() {
-      // TODO: db insert
-      
-      // TODO: send final conf email
+      /*$query = "INSERT INTO {$this->wpdb->phw_reservations}
+                (patron_name, patron_email, datetime_begin, datetime_end, purpose, room)
+                VALUES
+                ({$this->patron_name}, {$this->patron_email}, {$this->datetime_begin},
+                {$this->datetime_end}, {$this->purpose}, {$this->room});"; */
+      $this->wpdb->insert($this->wpdb->phw_reservations, 
+                          array(
+                             'patron_name'    => $this->patron_name,
+                             'patron_email'   => $this->patron_email,
+                             'datetime_start' => $this->datetime_start,
+                             'datetime_end'   => $this->datetime_end,
+                             'purpose'        => $this->purpose,
+                             'room'           => $this->room
+                          ));
+                          
       $this->send_confirmed_email($res_id);
       echo "<p>Your reservation has been confirmed!</p>";
    }
@@ -205,39 +226,28 @@ class PHWReserveReservationRequest {
    * @return void
    */
    private function delete_expired_transients() {
-      global $wpdb;
       $cur_time = time();
-      
-      // find expired transients by their WP generated timeout row entries
       $querySelectTimeouts = "SELECT option_name, option_value
-                              FROM {$wpdb->prefix}options
+                              FROM {$this->wpdb->prefix}options
                               WHERE option_name LIKE '%transient_timeout_phwreserve%'
                               AND option_value < {$cur_time};";
-      $results = $wpdb->get_results($querySelectTimeouts, ARRAY_A);
+      $expiredTransients = $this->wpdb->get_results($querySelectTimeouts, ARRAY_A);
+      if (!$expiredTransients) return;
  
-      // delete expired transient rows
       $queryDeleteExpired = "DELETE
-                             FROM {$wpdb->prefix}options
+                             FROM {$this->wpdb->prefix}options
                              WHERE ";
-      $i = 0;
-      $len = count($results);
-      foreach ($results as $result) {
+      foreach ($expiredTransients as $key => $result) {
          $option_name = str_replace('_timeout', '', $result['option_name']);
-         if ($i == 0)
-            $queryDeleteExpired .= "option_name = '{$option_name}' ";
-         elseif ($i == $len-1)
-            $queryDeleteExpired .= "OR option_name = '{$option_name}';";
-         else
-            $queryDeleteExpired .= "OR option_name = '{$option_name}' ";
-         $i++;
+         if ($key != 0) $queryDeleteExpired .= "OR ";
+         $queryDeleteExpired .= "option_name = '{$option_name}' ";
       }
-      $wpdb->query($queryDeleteExpired);
+      $this->wpdb->query($queryDeleteExpired);
       
-      // delete transient expiration date rows
       $queryDeleteTimeouts = "DELETE
-                              FROM {$wpdb->prefix}options
+                              FROM {$this->wpdb->prefix}options
                               WHERE option_name LIKE '%transient_timeout_phwreserve%'
                               AND option_value < {$cur_time};";
-      $wpdb->query($queryDeleteTimeouts);
+      $this->wpdb->query($queryDeleteTimeouts);
    }
 }

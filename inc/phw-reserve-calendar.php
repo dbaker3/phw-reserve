@@ -5,11 +5,22 @@
 */
 
 class PHWReserveCalendar {
+   private $room
 
-   function __construct() {
-   
+   function __construct($room) {
+      $this->room = $room;
    }
    
-   
+   public function display_calendar() {
+      html = "<table>";
+      html .=  "<tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>";
+      html .=  "<tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>";     
+      html .=  "<tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>";     
+      html .=  "<tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>";     
+      html .=  "<tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>";         
+      html .=  "<tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>";         
+      html .= "</table>";
+      echo $html;
+   }
 
 }

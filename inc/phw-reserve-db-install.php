@@ -1,14 +1,28 @@
 <?php
-/*
-   Database table install script
-   David Baker, Milligan College 2015
+/**
+* Contains database table install functions
+*
+* Adds table setup and creation to the init and switch_blog hooks
+* @author David Baker
+* @copyright 2015 Milligan College
+* @since 1.0
 */
 
+
+/**
+* Sets table name for WPDB class
+* @since 1.0
+*/
 function phw_reservations_table() {
    global $wpdb;
    $wpdb->phw_reservations = "{$wpdb->prefix}phw_reservations";
 }
 
+
+/**
+* Creates the table for reservation data 
+* @since 1.0
+*/
 function phw_reserve_create_table() {
    require_once (ABSPATH . 'wp-admin/includes/upgrade.php');
    global $wpdb;
@@ -20,8 +34,8 @@ function phw_reserve_create_table() {
             res_id int(10) unsigned NOT NULL auto_increment,
             patron_name varchar(100) NOT NULL default '',
             patron_email varchar(100) NOT NULL default '',
-            datetime_begin datetime NOT NULL default '0000-00-00 00:00:00',
-            datetime_end datetime NOT NULL default '0000-00-00 00:00:00',
+            datetime_start bigint NOT NULL default 0,
+            datetime_end bigint NOT NULL default 0,
             purpose varchar(100) NOT NULL default '',
             room varchar(100) NOT NULL default '',
             PRIMARY KEY  (res_id)
