@@ -63,6 +63,8 @@ class PHWReserveReservationRequest {
    * 
    * @since 1.0
    * @return boolean
+   *
+   * @todo check time conflict with Today's Hours widget if available
    */
    public function check_time_conflict() {
       // confirmed reservations
