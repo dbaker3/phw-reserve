@@ -8,14 +8,14 @@ Works with our _Today's Hours_ Wordpress plugin to make reservations available o
 #### CSS Classes
 
 The following is the list of CSS classes used to define the layout of the reservation form. You will probably want to style these somewhere:
- alert
- fail
- form
- label
- text
- three-fourths
- half
- full
- laylah
- textarea
- submit
+ - alert
+ - fail
+ - form
+ - label
+ - text
+ - three-fourths
+ - half
+ - full
+ - laylah
+ - textarea
+ - submit
