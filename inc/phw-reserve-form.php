@@ -1,9 +1,19 @@
 <?php
-/*
-   PHWReserveForm class
-   David Baker, Milligan College 2015
+/**
+* Contains the PHWReserveForm class
+*
+* @author David Baker
+* @copyright 2015 Milligan College
+* @since 1.0
+*
+* @todo make more clear distinction between edit and new
 */
 
+
+/**
+*
+* @since 1.0
+*/
 class PHWReserveForm {
    private $rooms;
    private $valid_emails;
@@ -58,7 +68,7 @@ class PHWReserveForm {
 
    public function validate_inputs() {
       if($this->laylah != '') {
-     		$this->honeypotError = 'You may not be human, please try again.';
+     		$this->honeypotError = 'You may not be human, please try again. Do not enter a value into the field labeled <em>Required*</em>.';
       	$this->hasError = true;
    	}
 
@@ -129,7 +139,22 @@ class PHWReserveForm {
          return false;
    } 
    
-   public function display_form() { ?>
+   
+   /**
+   * Echos HTML for reservation request form
+   *
+   * Displays the reservation request form. The same form is used for new requests and 
+   * edits of existing reservations. 
+   *
+   * @param boolean $editing True if user is editing existing reservation. Defaults to false
+   * @return void
+   * 
+   * @since 1.0
+   *
+   * @todo display different submit button for edits and new
+   * @todo clean up edit/new buttons, inputs, etc
+   */
+   public function display_form($editing = false) { ?>
       <div class="welshimer-form">
 		<?php if(isset($this->hasError)): ?>
 			<div class="alert fail">
@@ -159,9 +184,46 @@ class PHWReserveForm {
             <?php } ?>
 			</select>
 			</p>
-			<p class="form"><input class="submit full" type="submit" name="submit_new" value="Send Request" tabindex="11" ></p>
+			<p class="form">
+         <?php 
+         if ($editing) {
+            echo "<label class='label' for='del_res'>Cancel Reservation</label><input type='checkbox' id='del_res' name='del_res'>" 
+                 . "<input class='submit full' type='submit' name='submit_edit' value='Save Changes' tabindex='11' >"
+                 . "<input type='hidden' name='auth' value='{$_GET['auth']}'>";
+         }
+         else {
+            echo "<input class='submit full' type='submit' name='submit_new' value='Send Request' tabindex='11' >"; 
+         }
+         ?>
+         </p>
 		</form> 
       </div><?php 
    }
+ 
    
+   /**
+   * Fills form fields values on reservation request form
+   *
+   * Sets the class properties with the given parameters. You should call this
+   * method prior to display_form method if using form to edit existing reservation
+   *
+   * @param string $patron_name
+   * @param string $patron_email
+   * @param int $time_start
+   * @param int $time_end
+   * @param string $patron_purpose
+   * @param string $reserve_room
+   *
+   * @return void
+   * @since 1.0
+   */
+   public function set_form_fields($patron_name, $patron_email, $time_start, $time_end, $patron_purpose, $reserve_room) {
+      $this->patron_name = $patron_name;
+      $this->patron_email = $patron_email;
+      $this->time_date_valid = $time_start;
+      $this->time_start_valid = $time_start;
+      $this->time_end_valid = $time_end;
+      $this->patron_purpose = $patron_purpose;
+      $this->reserve_room = $reserve_room;
+   }
 }

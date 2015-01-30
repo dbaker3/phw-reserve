@@ -37,13 +37,15 @@ class PHWReserveReservationRequest {
    *
    * @return void
    */
-   public function __construct($name, $email, $start, $end, $room, $purpose) {
+   public function __construct($name = '', $email = '', $start = '', $end = '', 
+                               $room = '', $purpose = '', $auth_code='') {
       $this->patron_name = $name;
       $this->patron_email = $email;
       $this->datetime_start = $start;
       $this->datetime_end = $end;
       $this->room = $room;
       $this->purpose = $purpose;
+      $this->auth_code = $auth_code;
       
       global $wpdb;
       $this->wpdb =& $wpdb;
@@ -108,7 +110,7 @@ class PHWReserveReservationRequest {
    * @return void
    */
    public function authenticate_user() {
-      $this->auth_code = substr(md5(mt_rand()), -5);
+      $this->auth_code = substr(md5(mt_rand()), -14);
       
       $transient_name = 'phwreserve_' . time();
       $transient_data = array('patron_name'    => $this->patron_name,
@@ -141,6 +143,7 @@ class PHWReserveReservationRequest {
    * @return void
    *
    * @todo option for reply address
+   * @todo DRY email methods
    */
    private function send_auth_code_email($transient_name) {
       $conf_url = get_permalink() . '?transient=' . $transient_name . '&auth_code=' . $this->auth_code;
@@ -191,7 +194,8 @@ class PHWReserveReservationRequest {
                                 'datetime_start' => $this->datetime_start,
                                 'datetime_end'   => $this->datetime_end,
                                 'purpose'        => $this->purpose,
-                                'room'           => $this->room
+                                'room'           => $this->room,
+                                'auth_code'      => $this->auth_code
                              ));
          if (!$success) {
             echo "There was an error inserting data into the database. Please contact " . antispambot(get_option('admin_email')) . " with this error.";
@@ -216,12 +220,12 @@ class PHWReserveReservationRequest {
    * @todo option for reply address
    */
    private function send_confirmed_email($res_id) {
-      $conf_url = get_permalink() . '?res_id=' . $res_id;
+      $conf_url = get_permalink() . '?res_edit=true&res_id=' . $res_id . '&auth=' . $this->auth_code;
     	$emailTo = $this->patron_email;
 		$subject = 'Room Reservation Confirmation';
-      $body = "<h3>Reservation Confirmed</h3>";
-      $body .= "<p>This confirms that your reservation is complete. If someone is in the room when you arrive, please tell them that you have a reservation and politely ask them to leave. If you are uncomfortable doing this, please ask a library worker to assist you.</p>";
-      $body .= "<h3>Reservation Details</h3>";
+      $body = "<h3>Reservation Confirmed!</h3>";
+      $body .= "<p>Your reservation request is complete. If someone is in the room when you arrive, please tell them that you have a reservation and politely ask them to leave. If you are uncomfortable doing this, please ask a library worker to assist you.</p>";
+      $body .= "<h3>Reservation Details:</h3>";
   		$body .= '<p><strong>Requested by: </strong>' . $this->patron_name . ' [' . $this->patron_email . ']<br />';
 		$body .= '<strong>Date: </strong>' . date('D, M j, Y', $this->datetime_start) . ' from ' . date('g:i A', $this->datetime_start) . ' - ' . date('g:i A', $this->datetime_end) . '<br />';
 		$body .= '<strong>For: </strong>' . $this->purpose . '<br />';
@@ -276,5 +280,15 @@ class PHWReserveReservationRequest {
                               WHERE option_name LIKE '%transient_timeout_phwreserve%'
                               AND option_value < {$cur_time};";
       $this->wpdb->query($queryDeleteTimeouts);
+   }
+   
+   
+   public function get_res_data($res_id) {
+      $query = "SELECT * FROM {$this->wpdb->phw_reservations} WHERE res_id = '{$res_id}'";
+      $res_data = $this->wpdb->get_row($query, ARRAY_A);
+      if ($res_data)
+         return $res_data;
+      else
+         echo "ERROR: Reservation ID does not match existing reservation. Please contact " . antispambot(get_option('admin_email')) . " with this error.";
    }
 }

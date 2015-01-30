@@ -26,6 +26,7 @@ class PHWReservePageController {
    
    public $sv_submit_new = false;  // on submitting form for new reservation
    public $sv_auth_code = false;   // awaiting input of authentication code
+   public $sv_submit_edit = false; // on submitting form for editing reservation
 
    
    /**
@@ -63,6 +64,7 @@ class PHWReservePageController {
       if (isset($_GET['res_edit'])) $this->sv_edit_res = $_GET['res_edit'];
       if (isset($_POST['submit_new'])) $this->sv_submit_new = true;
       if (isset($_GET['auth_code'])) $this->sv_auth_code = $_GET['auth_code'];
+      if (isset($_POST['submit_edit'])) $this->sv_submit_edit = true;
    }
    
    /**
@@ -98,6 +100,11 @@ class PHWReservePageController {
          $this->handle_auth_code_submission();
       }
       
+      // Submitted edit/cancel reservation form
+      elseif ($this->sv_submit_edit) {
+         $this->handle_edit_res_submission($_POST['auth']);
+      }
+      
       // Initial Page Load
       else {
          $menu = new PHWReserveMenu($this->rooms);
@@ -114,6 +121,7 @@ class PHWReservePageController {
    *
    * @since 1.0
    * @todo kinda smells...should time-check be moved to validate_inputs?
+   * @todo DRY new res submission and edit res submission
    */
    private function handle_new_res_submission() { 
       $form = new PHWReserveForm($this->rooms, $this->valid_emails);
@@ -140,21 +148,53 @@ class PHWReservePageController {
       }
    }
    
+   /**
+   * Handles clicking link to reserve a room
+   * Creates new form object and calls its display_form method.
+   * @since 1.0
+   */
    private function handle_new_res_request() {
       $form = new PHWReserveForm($this->rooms, $this->valid_emails);
       $form->display_form();
    }
    
+   
+   /**
+   * Handles requests to edit/delete reservations
+   *
+   * Called when change/cancel URL in confirmation email is visited. 
+   *
+   * @since 1.0
+   * @todo how will admin edit/deletes be handled?
+   */
    private function handle_edit_res_request() {
-      $form = new PHWReserveForm($rooms, $emails);
-      // Do edit specific methods
-      $form->display_form();
+      $form = new PHWReserveForm($this->rooms, $this->emails);
+      if (isset($_GET['res_id'])) {
+         $reservation = new PHWReserveReservationRequest();
+         $res_data = $reservation->get_res_data($_GET['res_id']);
+         if ($res_data['auth_code'] == $_GET['auth']) {
+            $form->set_form_fields($res_data['patron_name'], 
+                                   $res_data['patron_email'],
+                                   $res_data['datetime_start'],
+                                   $res_data['datetime_end'],
+                                   $res_data['purpose'], 
+                                   $res_data['room']);
+            $form->display_form(true);
+         }
+         else {
+            echo "ERROR: Authorization code does not match requested reservation. Please contact " 
+                 . antispambot(get_option('admin_email')) . " with this error.";
+            wp_die();
+         }
+      }
    }
    
+   
    function handle_view_cal_request() {
-      $calendar = new PHWReserveCalendar($this->sv_room_cal);
+      $calendar = new PHWReserveCalendar($this->rooms);
       $calendar->display_calendar();
    }
+   
    
    private function handle_auth_code_submission() {
       $transient_data = get_transient($_GET['transient']);     // TODO: load all of these session vars
@@ -165,13 +205,34 @@ class PHWReservePageController {
                                                          $transient_data['datetime_start'], 
                                                          $transient_data['datetime_end'], 
                                                          $transient_data['room'], 
-                                                         $transient_data['purpose']);
+                                                         $transient_data['purpose'],
+                                                         $transient_data['auth_code']);
          $reservation->insert_into_db();
       }
       else {
-         echo '<p><strong>Error:</strong> Your authorization code does not match this reservation, or your email link has expired. If you belive you have incorrectly received this error, please contact ' . antispambot(get_option('admin_email')) . '</p>';
+         echo '<p><strong>Error:</strong> Your authorization code does not match this reservation, 
+               or your email link has expired. If you belive you have incorrectly received this error, 
+               please contact ' . antispambot(get_option('admin_email')) . '</p>';
       }
-      
-      
+   }
+
+   /**
+   * Handles edit/cancel form submission
+   *
+   * @todo LOTS!
+   */
+   private function handle_edit_res_submission($auth) {
+      /*
+         if it's a delete
+            just delete and move on
+         else, it's an edit
+            validate inputs
+            check date and time conflicts
+            WE NEED THE AUTH_CODE PASSED INTO HERE so we can authenticate
+            compare auth to auth in db record
+            update table
+      */
+      echo "You submitted an edit/delete!<br>";
+      echo $auth;
    }
 }
