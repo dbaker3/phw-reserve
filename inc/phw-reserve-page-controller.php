@@ -152,7 +152,8 @@ class PHWReservePageController {
    }
    
    function handle_view_cal_request() {
-      $calendar = new $PHWReserveCalendar($this->sv_room_cal);
+      $calendar = new PHWReserveCalendar($this->sv_room_cal);
+      $calendar->display_calendar();
    }
    
    private function handle_auth_code_submission() {

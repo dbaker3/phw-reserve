@@ -145,16 +145,16 @@ class PHWReserveReservationRequest {
    private function send_auth_code_email($transient_name) {
       $conf_url = get_permalink() . '?transient=' . $transient_name . '&auth_code=' . $this->auth_code;
    	$emailTo = $this->patron_email;
-		$subject =  'Confirm Room Reservation Request';
-		$body = '<h4>Please click the following link to confirm your room reservation request made ' . date("F j, Y, g:i a") .'</h4>';
+		$subject =  'Please confirm your room reservation request';
+		$body = '<h3>Please click the following link to confirm your room reservation request made ' . date("F j, Y, g:i a") .'</h3>';
       $body .= "<p><a href='{$conf_url}'>{$conf_url}</a></p>";
-		$body .= '<p><strong>Requested by: </strong>' . $this->patron_name . ' [' . $this->patron_email . ']</p>';
-		$body .= '<p><strong>Date: </strong>' . date('D, M j, Y', $this->datetime_start) . ' from ' . date('g:i A', $this->datetime_start) . ' - ' . date('g:i A', $this->datetime_end) . '</p>';
-		$body .= '<p><strong>For: </strong>' . $this->purpose . '</p>';
-		$body .= '<p><strong>Room: </strong>' . $this->room . '</p>';
+		$body .= '<p><strong>Requested by: </strong>' . $this->patron_name . ' [' . $this->patron_email . ']<br />';
+		$body .= '<strong>Date: </strong>' . date('D, M j, Y', $this->datetime_start) . ' from ' . date('g:i A', $this->datetime_start) . ' - ' . date('g:i A', $this->datetime_end) . '<br />';
+		$body .= '<strong>For: </strong>' . $this->purpose . '<br />';
+		$body .= '<strong>Room: </strong>' . $this->room . '</p>';
 
-		$headers[] = 'From: Room Reservation Webform <library@milligan.edu>';
-		$headers[] = 'Reply-To: ' . $patron_email;
+		$headers[] = 'From: Room Reservation Webform <' . get_option('admin_email') . '>';
+		$headers[] = 'Reply-To: ' . get_option('admin_email');
 		$headers[] = 'content-type: text/html';
 
 		if (wp_mail( $emailTo, $subject, $body, $headers )) {
@@ -173,28 +173,33 @@ class PHWReserveReservationRequest {
    *
    * @since 1.0
    *
-   * @todo database insert
    * @todo generate URL to edit/delete reservation
    * @todo send final confirmation email
    */
    public function insert_into_db() {
-      /*$query = "INSERT INTO {$this->wpdb->phw_reservations}
-                (patron_name, patron_email, datetime_begin, datetime_end, purpose, room)
-                VALUES
-                ({$this->patron_name}, {$this->patron_email}, {$this->datetime_begin},
-                {$this->datetime_end}, {$this->purpose}, {$this->room});"; */
-      $this->wpdb->insert($this->wpdb->phw_reservations, 
-                          array(
-                             'patron_name'    => $this->patron_name,
-                             'patron_email'   => $this->patron_email,
-                             'datetime_start' => $this->datetime_start,
-                             'datetime_end'   => $this->datetime_end,
-                             'purpose'        => $this->purpose,
-                             'room'           => $this->room
-                          ));
-                          
-      $this->send_confirmed_email($res_id);
-      echo "<p>Your reservation has been confirmed!</p>";
+      $query_get_res_id = "SELECT res_id FROM {$this->wpdb->phw_reservations} 
+                           WHERE datetime_start = '{$this->datetime_start}' 
+                           AND room = '{$this->room}'";
+      if ($this->wpdb->get_results($query_get_res_id)) {
+         echo "This reservation has been confirmed.";
+      }
+      else {
+         $success = $this->wpdb->insert($this->wpdb->phw_reservations, 
+                             array(
+                                'patron_name'    => $this->patron_name,
+                                'patron_email'   => $this->patron_email,
+                                'datetime_start' => $this->datetime_start,
+                                'datetime_end'   => $this->datetime_end,
+                                'purpose'        => $this->purpose,
+                                'room'           => $this->room
+                             ));
+         if (!$success) {
+            echo "There was an error inserting data into the database. Please contact " . antispambot(get_option('admin_email')) . " with this error.";
+            wp_die();
+         }
+         $res_id = $this->wpdb->get_results($query_get_res_id);
+         $this->send_confirmed_email($res_id[0]->res_id);
+      }
    }
 
 
@@ -208,10 +213,30 @@ class PHWReserveReservationRequest {
    * @param int $res_id The reservation id matching the res_id column in table
    * @return void
    *
-   * @todo write method code
+   * @todo option for reply address
    */
    private function send_confirmed_email($res_id) {
-   
+      $conf_url = get_permalink() . '?res_id=' . $res_id;
+    	$emailTo = $this->patron_email;
+		$subject = 'Room Reservation Confirmation';
+      $body = "<h3>Reservation Confirmed</h3>";
+      $body .= "<p>This confirms that your reservation is complete. If someone is in the room when you arrive, please tell them that you have a reservation and politely ask them to leave. If you are uncomfortable doing this, please ask a library worker to assist you.</p>";
+      $body .= "<h3>Reservation Details</h3>";
+  		$body .= '<p><strong>Requested by: </strong>' . $this->patron_name . ' [' . $this->patron_email . ']<br />';
+		$body .= '<strong>Date: </strong>' . date('D, M j, Y', $this->datetime_start) . ' from ' . date('g:i A', $this->datetime_start) . ' - ' . date('g:i A', $this->datetime_end) . '<br />';
+		$body .= '<strong>For: </strong>' . $this->purpose . '<br />';
+		$body .= '<strong>Room: </strong>' . $this->room . '</p>';
+      $body .= "<p>If you need to change or cancel your reservation, please visit this link:";
+      $body .= "<br /><a href='{$conf_url}'>{$conf_url}</a></p>";
+
+		$headers[] = 'From: Room Reservation Webform <' . get_option('admin_email') . '>';
+		$headers[] = 'Reply-To: ' . get_option('admin_email');
+		$headers[] = 'content-type: text/html';
+      
+      if (wp_mail( $emailTo, $subject, $body, $headers )) {
+         echo "<p>Your reservation has been confirmed!</p>";
+         echo "<p>A confirmation email has been sent to {$this->patron_email}. The email contains a link to make changes or cancel your reservation should you need to do so.</p>";
+      }
    }
 
    

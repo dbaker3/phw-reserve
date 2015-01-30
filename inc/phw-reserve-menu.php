@@ -29,19 +29,13 @@ class PHWReserveMenu {
    * @return void
    * @todo Make prettier, more functional
    */
-   public function display_menu() {
-      $output =  "<div id='phwreserve-mainmenu'>";
-         $output .= "<p>View Room Calendar: ";
-         $output .= "<select id='room-selector'>";
-            $output .= "<option>Select a room...</option>";
-            foreach ($this->rooms as $room) {
-            $output .= "<option>{$room}</option>";
-            }
-         $output .= "</select>";
-         $output .= "</p>";
-         $output .= "<p><a href='?res_new=true'>Reserve a Study Room</a></p>";     
-         $output .= "<p><a href='?res_edit=true'>Change or Cancel a reservation</a></p>";
-      $output .= "</div>";
-      echo $output;
+   public function display_menu() { ?>
+      <div id='phwreserve-mainmenu' action='' method='get'>
+         <ul>
+            <li><a href="?res_new=true">Reserve a Room</a></li>
+            <li><a href="?room_cal=true">View Room Availability</a></li>
+            <li><a href="?res_edit=true">Change or Cancel a Reservation</a></li>
+         </ul>
+      </div> <?php
    }
 }

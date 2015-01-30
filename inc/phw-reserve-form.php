@@ -57,9 +57,9 @@ class PHWReserveForm {
    }
 
    public function validate_inputs() {
-      if(isset($this->laylah)) {
-     		$honeypotError = 'You may not be human, please try again.';
-      	$hasError = true;
+      if($this->laylah != '') {
+     		$this->honeypotError = 'You may not be human, please try again.';
+      	$this->hasError = true;
    	}
 
    	if($this->patron_name === '') {
@@ -130,6 +130,7 @@ class PHWReserveForm {
    } 
    
    public function display_form() { ?>
+      <div class="welshimer-form">
 		<?php if(isset($this->hasError)): ?>
 			<div class="alert fail">
 				<?php if(isset($this->honeypotError)){echo $this->honeypotError . '<br />';}?>
@@ -158,9 +159,9 @@ class PHWReserveForm {
             <?php } ?>
 			</select>
 			</p>
-			<p class="form"><label class="label" for="patron_message">Special Instructions: </label><textarea tabindex="10" class="textarea" id="patron_message" name="patron_message" ><?php if(isset($this->patron_message)){echo $this->patron_message;} ?></textarea></p>
 			<p class="form"><input class="submit full" type="submit" name="submit_new" value="Send Request" tabindex="11" ></p>
-		</form> <?php 
+		</form> 
+      </div><?php 
    }
    
 }
