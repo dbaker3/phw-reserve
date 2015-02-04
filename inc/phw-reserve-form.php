@@ -153,6 +153,7 @@ class PHWReserveForm {
    *
    * @todo display different submit button for edits and new
    * @todo clean up edit/new buttons, inputs, etc
+   * @todo make patron_name patron_email read-only on edits
    */
    public function display_form($editing = false) { ?>
       <div class="welshimer-form">
@@ -189,7 +190,8 @@ class PHWReserveForm {
          if ($editing) {
             echo "<label class='label' for='del_res'>Cancel Reservation</label><input type='checkbox' id='del_res' name='del_res'>" 
                  . "<input class='submit full' type='submit' name='submit_edit' value='Save Changes' tabindex='11' >"
-                 . "<input type='hidden' name='auth' value='{$_GET['auth']}'>";
+                 . "<input type='hidden' name='auth' value='{$_GET['auth']}'>"
+                 . "<input type='hidden' name='res_id' value='{$_GET['res_id']}'>";
          }
          else {
             echo "<input class='submit full' type='submit' name='submit_new' value='Send Request' tabindex='11' >"; 

@@ -25,7 +25,7 @@ class PHWReservePageController {
    public $sv_edit_res = false;    // on main menu - Change/delete reservation
    
    public $sv_submit_new = false;  // on submitting form for new reservation
-   public $sv_auth_code = false;   // awaiting input of authentication code
+   public $sv_auth_code = false;   // on clicking auth code link in email
    public $sv_submit_edit = false; // on submitting form for editing reservation
 
    
@@ -85,7 +85,7 @@ class PHWReservePageController {
          $this->handle_new_res_request();
       }
       
-      // Selected - Change or Cancel Reservation
+      // Clicked edit link in email or Selected - Change or Cancel Reservation
       elseif ($this->sv_edit_res) {
          $this->handle_edit_res_request();
       }
@@ -95,14 +95,14 @@ class PHWReservePageController {
          $this->handle_new_res_submission();
       }
       
-      // Submitted authentication code
+      // Clicked authentication code link in email
       elseif ($this->sv_auth_code) {
          $this->handle_auth_code_submission();
       }
       
       // Submitted edit/cancel reservation form
       elseif ($this->sv_submit_edit) {
-         $this->handle_edit_res_submission($_POST['auth']);
+         $this->handle_edit_res_submission();
       }
       
       // Initial Page Load
@@ -147,6 +147,7 @@ class PHWReservePageController {
          $form->display_form();  
       }
    }
+   
    
    /**
    * Handles clicking link to reserve a room
@@ -195,9 +196,17 @@ class PHWReservePageController {
       $calendar->display_calendar();
    }
    
-   
+   /**
+   * Handes submission of an auth code from email
+   *
+   * Also deletes the transient after inserting res into table 
+   *
+   * @since 1.0
+   * @todo DELETE the TRANSIENT after inserting! this will fix editing
+   */
    private function handle_auth_code_submission() {
-      $transient_data = get_transient($_GET['transient']);     // TODO: load all of these session vars
+      $transient_name = $_GET['transient'];
+      $transient_data = get_transient($transient_name);     // TODO: load all of these session vars
       $auth_code = $transient_data['auth_code'];
       if ($auth_code == $_GET['auth_code']) {
          $reservation = new PHWReserveReservationRequest($transient_data['patron_name'], 
@@ -208,6 +217,7 @@ class PHWReservePageController {
                                                          $transient_data['purpose'],
                                                          $transient_data['auth_code']);
          $reservation->insert_into_db();
+         delete_transient($transient_name);
       }
       else {
          echo '<p><strong>Error:</strong> Your authorization code does not match this reservation, 
@@ -219,20 +229,43 @@ class PHWReservePageController {
    /**
    * Handles edit/cancel form submission
    *
-   * @todo LOTS!
    */
-   private function handle_edit_res_submission($auth) {
-      /*
-         if it's a delete
-            just delete and move on
-         else, it's an edit
-            validate inputs
-            check date and time conflicts
-            WE NEED THE AUTH_CODE PASSED INTO HERE so we can authenticate
-            compare auth to auth in db record
-            update table
-      */
-      echo "You submitted an edit/delete!<br>";
-      echo $auth;
+   private function handle_edit_res_submission() {
+      $reservation = new PHWReserveReservationRequest();
+      $res_auth_code = $reservation->get_res_auth_code($_POST['res_id']);
+      if ($_POST['auth'] == $res_auth_code) {
+         if (isset($_POST['del_res'])) {           // user wants it cancelled
+            $reservation->del_res($_POST['res_id']);
+         }
+         else {   // user wants to edit res
+            $form = new PHWReserveForm($this->rooms, $this->valid_emails);
+            if ($form->validate_inputs()) {
+               $begin_time = strtotime(date('n/j/y', $form->time_date_valid) . ' ' . date('G:i e', $form->time_start_valid));
+               $end_time= strtotime(date('n/j/y', $form->time_date_valid) . ' ' . date('G:i e', $form->time_end_valid));
+               $reservation->set_properties($form->patron_name, $form->patron_email, 
+                                            $begin_time, $end_time, $form->reserve_room,
+                                            $form->patron_purpose);
+               if ($reservation->check_time_conflict($_POST['res_id'])) {
+                  $form->hasError = true;
+                  $form->timeStartError = "{$form->reserve_room} is already reserved during this time.";
+                  $form->timeEndError = "";
+                  $form->display_form($editing = true);
+               }
+               else
+               {
+                  print_r($reservation);
+                  $reservation->update_into_db();
+               }
+            }
+            else {
+               $form->display_form($editing = true);
+            }
+         }
+      }
+      else {
+            echo "ERROR: Authorization code does not match requested reservation. Please contact " 
+                 . antispambot(get_option('admin_email')) . " with this error.";
+            wp_die();        
+      }
    }
 }

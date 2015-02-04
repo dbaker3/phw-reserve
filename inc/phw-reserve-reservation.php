@@ -53,6 +53,16 @@ class PHWReserveReservationRequest {
    }
 
    
+   public function set_properties($name, $email, $start, $end, $room, $purpose) {
+      $this->patron_name = $name;
+      $this->patron_email = $email;
+      $this->datetime_start = $start;
+      $this->datetime_end = $end;
+      $this->room = $room;
+      $this->purpose = $purpose;
+   }
+   
+   
    /**
    * Returns true if requested time conflicts with an existing reservation
    *
@@ -61,19 +71,25 @@ class PHWReserveReservationRequest {
    * found. If false, checks for conflicts with as-of-yet confirmed requests 
    * that exist only as transients awaiting confirmation. Returns true if found.
    *
+   * Will ignore a reservation if passed in as $res_id. This allows adjusting
+   * the time of an existing reservation (via an edit) without it reporting a 
+   * conflict.
+   *
    * Also deletes expired transients prior to checking for conflicting transients
    * 
    * @since 1.0
+   * @param int $res_id ID of the reservation being edited so it doesn't return itself
    * @return boolean
    *
    * @todo check time conflict with Today's Hours widget if available
    */
-   public function check_time_conflict() {
+   public function check_time_conflict($res_id = 0) {
       // confirmed reservations
       $query = "SELECT res_id FROM {$this->wpdb->phw_reservations}
                 WHERE {$this->datetime_start} < datetime_end
                 AND {$this->datetime_end} > datetime_start
-                AND '{$this->room}' = room";
+                AND '{$this->room}' = room
+                AND {$res_id} <> res_id";
       $conflicting = $this->wpdb->query($query);
       // unconfirmed reservations
       if (!$conflicting) {
@@ -247,11 +263,6 @@ class PHWReserveReservationRequest {
    /**
    * Finds and deletes expired transients created by this plugin
    *
-   * Each transient exists in 2 rows in the wp_options table. This method finds
-   * and deletes both the 'user-created' transient row (e.g. _transient_phwreserve_1422302516)
-   * and the WordPress generated row which contains the transient expiration 
-   * date (e.g. _transient_timeout_phwreserve_1422302516) for expired transients
-   *
    * @since 1.0
    *
    * @return void
@@ -263,23 +274,12 @@ class PHWReserveReservationRequest {
                               WHERE option_name LIKE '%transient_timeout_phwreserve%'
                               AND option_value < {$cur_time};";
       $expiredTransients = $this->wpdb->get_results($querySelectTimeouts, ARRAY_A);
-      if (!$expiredTransients) return;
- 
-      $queryDeleteExpired = "DELETE
-                             FROM {$this->wpdb->prefix}options
-                             WHERE ";
-      foreach ($expiredTransients as $key => $result) {
-         $option_name = str_replace('_timeout', '', $result['option_name']);
-         if ($key != 0) $queryDeleteExpired .= "OR ";
-         $queryDeleteExpired .= "option_name = '{$option_name}' ";
+      if ($expiredTransients) {
+         foreach ($expiredTransients as $transient) {
+            $option_name = str_replace('_timeout', '', $transient['option_name']);
+            delete_transient($option_name);
+         } 
       }
-      $this->wpdb->query($queryDeleteExpired);
-      
-      $queryDeleteTimeouts = "DELETE
-                              FROM {$this->wpdb->prefix}options
-                              WHERE option_name LIKE '%transient_timeout_phwreserve%'
-                              AND option_value < {$cur_time};";
-      $this->wpdb->query($queryDeleteTimeouts);
    }
    
    
@@ -289,6 +289,38 @@ class PHWReserveReservationRequest {
       if ($res_data)
          return $res_data;
       else
-         echo "ERROR: Reservation ID does not match existing reservation. Please contact " . antispambot(get_option('admin_email')) . " with this error.";
+         $this->no_id_match_error();
+   }
+   
+   public function get_res_auth_code($res_id) {
+      $query = "SELECT auth_code FROM {$this->wpdb->phw_reservations} WHERE res_id = '{$res_id}'";
+      $auth_code = $this->wpdb->get_row($query, ARRAY_A);
+      if ($auth_code['auth_code']) 
+         return $auth_code['auth_code'];
+      else
+         $this->no_id_match_error();
+   }
+   
+   public function del_res($res_id) {
+      if ($this->wpdb->delete($this->wpdb->phw_reservations, array('res_id' => $res_id)))
+         echo "Reservation has been cancelled.";
+      else
+         $this->no_id_match_error();
+   }
+   
+   /**
+   * @todo code table update
+   */
+   public function update_into_db() {
+      if ($this->wpdb->update($this->wpdb->phw_reservations,)) {
+         echo "Updated Reservation";
+      }
+   
+      // send changes email
+   }
+   
+   private function no_id_match_error() {
+      echo "ERROR: Reservation ID does not match existing reservation. Please contact "
+           . antispambot(get_option('admin_email')) . " with this error.";
    }
 }
