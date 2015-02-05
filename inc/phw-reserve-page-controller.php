@@ -231,21 +231,22 @@ class PHWReservePageController {
    *
    */
    private function handle_edit_res_submission() {
+      $res_id = $_POST['res_id'];
       $reservation = new PHWReserveReservationRequest();
-      $res_auth_code = $reservation->get_res_auth_code($_POST['res_id']);
+      $res_auth_code = $reservation->get_res_auth_code($res_id);
       if ($_POST['auth'] == $res_auth_code) {
          if (isset($_POST['del_res'])) {           // user wants it cancelled
-            $reservation->del_res($_POST['res_id']);
+            $reservation->del_res($res_id);
          }
          else {   // user wants to edit res
             $form = new PHWReserveForm($this->rooms, $this->valid_emails);
             if ($form->validate_inputs()) {
                $begin_time = strtotime(date('n/j/y', $form->time_date_valid) . ' ' . date('G:i e', $form->time_start_valid));
                $end_time= strtotime(date('n/j/y', $form->time_date_valid) . ' ' . date('G:i e', $form->time_end_valid));
-               $reservation->set_properties($form->patron_name, $form->patron_email, 
+               $reservation->set_properties($res_id, $form->patron_name, $form->patron_email, 
                                             $begin_time, $end_time, $form->reserve_room,
                                             $form->patron_purpose);
-               if ($reservation->check_time_conflict($_POST['res_id'])) {
+               if ($reservation->check_time_conflict($res_id)) {
                   $form->hasError = true;
                   $form->timeStartError = "{$form->reserve_room} is already reserved during this time.";
                   $form->timeEndError = "";

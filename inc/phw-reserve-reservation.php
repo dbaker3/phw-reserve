@@ -12,7 +12,7 @@
 */
 
 class PHWReserveReservationRequest {
-   private $reservation_id;
+   private $res_id;     // only set when res is being edited
    private $patron_name;
    private $patron_email;
    private $datetime_start;
@@ -39,6 +39,7 @@ class PHWReserveReservationRequest {
    */
    public function __construct($name = '', $email = '', $start = '', $end = '', 
                                $room = '', $purpose = '', $auth_code='') {
+      $this->res_id = 0;
       $this->patron_name = $name;
       $this->patron_email = $email;
       $this->datetime_start = $start;
@@ -53,7 +54,8 @@ class PHWReserveReservationRequest {
    }
 
    
-   public function set_properties($name, $email, $start, $end, $room, $purpose) {
+   public function set_properties($res_id, $name, $email, $start, $end, $room, $purpose) {
+      $this->res_id = $res_id;
       $this->patron_name = $name;
       $this->patron_email = $email;
       $this->datetime_start = $start;
@@ -71,25 +73,24 @@ class PHWReserveReservationRequest {
    * found. If false, checks for conflicts with as-of-yet confirmed requests 
    * that exist only as transients awaiting confirmation. Returns true if found.
    *
-   * Will ignore a reservation if passed in as $res_id. This allows adjusting
+   * Will ignore the reservation if $res_id is set. This allows adjusting
    * the time of an existing reservation (via an edit) without it reporting a 
    * conflict.
    *
    * Also deletes expired transients prior to checking for conflicting transients
    * 
    * @since 1.0
-   * @param int $res_id ID of the reservation being edited so it doesn't return itself
    * @return boolean
    *
    * @todo check time conflict with Today's Hours widget if available
    */
-   public function check_time_conflict($res_id = 0) {
+   public function check_time_conflict() {
       // confirmed reservations
       $query = "SELECT res_id FROM {$this->wpdb->phw_reservations}
                 WHERE {$this->datetime_start} < datetime_end
                 AND {$this->datetime_end} > datetime_start
                 AND '{$this->room}' = room
-                AND {$res_id} <> res_id";
+                AND {$this->res_id} <> res_id";
       $conflicting = $this->wpdb->query($query);
       // unconfirmed reservations
       if (!$conflicting) {
@@ -312,7 +313,12 @@ class PHWReserveReservationRequest {
    * @todo code table update
    */
    public function update_into_db() {
-      if ($this->wpdb->update($this->wpdb->phw_reservations,)) {
+      if ($this->wpdb->update($this->wpdb->phw_reservations,
+                              array( 'datetime_start' => $this->datetime_start,
+                                     'datetime_end'   => $this->datetime_end,
+                                     'purpose'        => $this->purpose,
+                                     'room'           => $this->room),
+                              array( 'res_id'         => $this->res_id))) {
          echo "Updated Reservation";
       }
    
