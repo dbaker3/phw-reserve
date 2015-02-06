@@ -64,6 +64,9 @@ class PHWReserveForm {
    	$this->time_date_valid = strtotime($this->time_date);
      	$this->time_start_valid = strtotime($this->time_start); 
    	$this->time_end_valid = strtotime($this->time_end);
+      if (isset($_GET['time_date'])) { // passed from 'make reservation' on calendar
+         $this->time_date_valid = $_GET['time_date'];
+      }
    }
 
    public function validate_inputs() {
@@ -151,9 +154,7 @@ class PHWReserveForm {
    * 
    * @since 1.0
    *
-   * @todo display different submit button for edits and new
    * @todo clean up edit/new buttons, inputs, etc
-   * @todo make patron_name patron_email read-only on edits
    */
    public function display_form($editing = false) { ?>
       <div class="welshimer-form">
@@ -171,8 +172,8 @@ class PHWReserveForm {
 		<?php endif; ?>
          
       <form action="<?php the_permalink(); ?>" method="post">
-			<p class="form"><label class="label" for="patron_name">Name:* </label><input tabindex="1" class="text three-fourths<?php if(isset($this->nameError)){echo ' fail';}?>" type="text" id="patron_name" name="patron_name" value="<?php if(isset($this->patron_name)){echo $this->patron_name;} ?>"/></p>
-			<p class="form"><label class="label" for="patron_email">Email:* </label><input tabindex="2" class="text three-fourths<?php if(isset($this->emailError)){echo ' fail';}?>" type="email" id="patron_email" name="patron_email" value="<?php if(isset($this->patron_email)){echo $this->patron_email;} ?>" /></p>
+			<p class="form"><label class="label" for="patron_name">Name:* </label><input tabindex="1" class="text three-fourths<?php if(isset($this->nameError)){echo ' fail';}?>" type="text" id="patron_name" name="patron_name" value="<?php if(isset($this->patron_name)){echo $this->patron_name;} ?>" <?php if($editing){echo 'readonly';} ?>/></p>
+			<p class="form"><label class="label" for="patron_email">Email:* </label><input tabindex="2" class="text three-fourths<?php if(isset($this->emailError)){echo ' fail';}?>" type="email" id="patron_email" name="patron_email" value="<?php if(isset($this->patron_email)){echo $this->patron_email;} ?>" <?php if($editing){echo 'readonly';} ?>/></p>
 			<p class="form"><label class="label" for="time_date">Date:* </label><input tabindex="3" class="text half<?php if(isset($this->dateError)){echo ' fail';}?>" type="date" id="time_date" name="time_date" value="<?php if($this->time_date_valid){echo date('n/j/Y', $this->time_date_valid);} ?>" /></p>
 			<p class="form"><label class="label" for="time_start">Start Time:* </label><input tabindex="4" class="text half<?php if(isset($this->timeStartError)){echo ' fail';}?>" type="text" id="time_start" name="time_start" value="<?php if($this->time_start_valid){echo date('g:i A', $this->time_start_valid);} ?>" /></p>
 			<p class="form"><label class="label" for="time_end">End Time:* </label><input tabindex="5" class="text half<?php if(isset($this->timeEndError)){echo ' fail';}?>" type="text" id="time_end" name="time_end" value="<?php if($this->time_end_valid){echo date('g:i A', $this->time_end_valid);} ?>" /></p>

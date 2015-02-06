@@ -35,8 +35,8 @@ class PHWReserveMenu {
    public function display_menu() { ?>
       <div class='welshimer-form' action=''>
          <form action='' method='GET'>
-            <button class='submit full' type='submit' name='res_new' value='true'>Reserve a Room</button>
-            <button class='submit full' type='submit' name='room_cal' value='true'>View Room Availability</button>
+            <button class='submit three-fourths' type='submit' name='res_new' value='true'>Reserve a Room</button>
+            <button class='submit three-fourths' type='submit' name='room_cal' value='true'>View Room Availability</button>
             <?php if (is_user_logged_in()) 
                echo "<button class='submit full' type='submit' name='res_edit' value='true'>Change or Cancel a Reservation</button>";
             ?>

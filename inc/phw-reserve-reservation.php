@@ -54,7 +54,7 @@ class PHWReserveReservationRequest {
    }
 
    
-   public function set_properties($res_id, $name, $email, $start, $end, $room, $purpose) {
+   public function set_properties($res_id, $name, $email, $start, $end, $room, $purpose, $auth) {
       $this->res_id = $res_id;
       $this->patron_name = $name;
       $this->patron_email = $email;
@@ -62,6 +62,7 @@ class PHWReserveReservationRequest {
       $this->datetime_end = $end;
       $this->room = $room;
       $this->purpose = $purpose;
+      $this->auth_code = $auth;
    }
    
    
@@ -193,8 +194,6 @@ class PHWReserveReservationRequest {
    *
    * @since 1.0
    *
-   * @todo generate URL to edit/delete reservation
-   * @todo send final confirmation email
    */
    public function insert_into_db() {
       $query_get_res_id = "SELECT res_id FROM {$this->wpdb->phw_reservations} 
@@ -310,19 +309,31 @@ class PHWReserveReservationRequest {
    }
    
    /**
-   * @todo code table update
+   * Updates existing reservation in database 
+   * @since 1.0
    */
    public function update_into_db() {
-      if ($this->wpdb->update($this->wpdb->phw_reservations,
+      $result = $this->wpdb->update($this->wpdb->phw_reservations,
                               array( 'datetime_start' => $this->datetime_start,
                                      'datetime_end'   => $this->datetime_end,
                                      'purpose'        => $this->purpose,
                                      'room'           => $this->room),
-                              array( 'res_id'         => $this->res_id))) {
-         echo "Updated Reservation";
+                              array( 'res_id'         => $this->res_id),
+                              array('%d', '%d', '%s', '%s'),
+                              array('%d')
+                              );
+                              
+      if ($result) {
+         echo "Your reservation has been updated.";
+         $this->send_confirmed_email($this->res_id);
       }
-   
-      // send changes email
+      elseif ($result === 0) {
+         echo "You did not make any changes to your reservation.";
+      }
+      else {
+         echo "ERROR: Could not update reservation details. Please contact "
+              . antispambot(get_option('admin_email')) . " with this error.";
+      }
    }
    
    private function no_id_match_error() {

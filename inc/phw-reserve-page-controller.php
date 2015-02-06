@@ -193,7 +193,11 @@ class PHWReservePageController {
    
    function handle_view_cal_request() {
       $calendar = new PHWReserveCalendar($this->rooms);
-      $calendar->display_calendar();
+      $calendar->show_form();
+      
+      if (isset($_GET['view_cal'])) {
+         $calendar->show_reservations();
+      }
    }
    
    /**
@@ -202,7 +206,6 @@ class PHWReservePageController {
    * Also deletes the transient after inserting res into table 
    *
    * @since 1.0
-   * @todo DELETE the TRANSIENT after inserting! this will fix editing
    */
    private function handle_auth_code_submission() {
       $transient_name = $_GET['transient'];
@@ -245,7 +248,7 @@ class PHWReservePageController {
                $end_time= strtotime(date('n/j/y', $form->time_date_valid) . ' ' . date('G:i e', $form->time_end_valid));
                $reservation->set_properties($res_id, $form->patron_name, $form->patron_email, 
                                             $begin_time, $end_time, $form->reserve_room,
-                                            $form->patron_purpose);
+                                            $form->patron_purpose, $res_auth_code);
                if ($reservation->check_time_conflict($res_id)) {
                   $form->hasError = true;
                   $form->timeStartError = "{$form->reserve_room} is already reserved during this time.";
@@ -254,7 +257,6 @@ class PHWReservePageController {
                }
                else
                {
-                  print_r($reservation);
                   $reservation->update_into_db();
                }
             }
@@ -269,4 +271,5 @@ class PHWReservePageController {
             wp_die();        
       }
    }
+   
 }

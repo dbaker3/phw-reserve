@@ -30,3 +30,9 @@ function phw_reserve_shortcode() {
 }
 
 add_shortcode('phw-reserve-page', 'phw_reserve_shortcode');
+
+function phwreserve_enqueue_style() {
+	wp_enqueue_style( 'phwreserve', plugin_dir_url(__FILE__) . 'css/phwreserve.css');
+}
+
+add_action( 'wp_enqueue_scripts', 'phwreserve_enqueue_style' );
