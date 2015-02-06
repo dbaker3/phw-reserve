@@ -105,7 +105,12 @@ class PHWReserveSettings {
       register_setting(self::$option_page, self::$option_name, array(__CLASS__, 'phwreserve_sanitize_callback'));
    }
 
+   /**
+   * Writes HTML for main section. Not used in 1.0
+   * @since 1.0
+   */
    public function phwreserve_main_section_callback($args) {}
+   
    
    /**
    * Writes HTML for valid_emails setting

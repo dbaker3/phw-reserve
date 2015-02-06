@@ -1,6 +1,7 @@
 <?php
 /**
 * Contains the PHWReserveMenu class
+*
 * @author David Baker
 * @copyright 2015 Milligan College
 * @since 1.0

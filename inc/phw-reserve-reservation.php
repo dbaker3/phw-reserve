@@ -1,16 +1,22 @@
 <?php
 /**
 * Contains PHWReserveReservationRequest class
-*
-* This class represents the reservation request. It verifies date/time, handles
-* authorization of requestor, sends appropriate emails to requestor, and communicates
-* with the WP database table, pwh_reservations.
 * 
 * @author David Baker
 * @copyright 2015 Milligan College
 * @since 1.0
 */
 
+
+/**
+* Reservation Requests
+*
+* Represents the reservation request. It verifies date/time, handles
+* authorization of requestor, sends appropriate emails to requestor, and communicates
+* with the WP database table, pwh_reservations.
+*
+* @since 1.0
+*/
 class PHWReserveReservationRequest {
    private $res_id;     // only set when res is being edited
    private $patron_name;
@@ -54,6 +60,23 @@ class PHWReserveReservationRequest {
    }
 
    
+   /**
+   * Sets reservation properties
+   *
+   * Use this if you didn't set properties with constructor. As of 1.0 only used
+   * by PHWReservePageController::handle_edit_res_submission(). Might be able to 
+   * get rid of this method if that one is restructured.
+   *
+   * @param int $res_id
+   * @param string $name
+   * @param string $email
+   * @param int $start
+   * @param int $end
+   * @param string $room
+   * @param string $purpose
+   * @param string $auth
+   * @since 1.0
+   */
    public function set_properties($res_id, $name, $email, $start, $end, $room, $purpose, $auth) {
       $this->res_id = $res_id;
       $this->patron_name = $name;
@@ -84,6 +107,7 @@ class PHWReserveReservationRequest {
    * @return boolean
    *
    * @todo check time conflict with Today's Hours widget if available
+   * @todo should this be moved to the PHWReserveForm class?
    */
    public function check_time_conflict() {
       // confirmed reservations
@@ -283,6 +307,15 @@ class PHWReserveReservationRequest {
    }
    
    
+   /**
+   * Returns reservation data from table as array
+   *
+   * @param int $res_id Reservation ID 
+   * @return mixed $res_data All of a reservation's data from the table
+   * @since 1.0
+   *
+   * @todo replace $res_id parameter with $this->res_id
+   */
    public function get_res_data($res_id) {
       $query = "SELECT * FROM {$this->wpdb->phw_reservations} WHERE res_id = '{$res_id}'";
       $res_data = $this->wpdb->get_row($query, ARRAY_A);
@@ -292,6 +325,16 @@ class PHWReserveReservationRequest {
          $this->no_id_match_error();
    }
    
+   
+   /**
+   * Returns authorization code of a reservation
+   *
+   * @param int $res_id Reservation ID 
+   * @return string $auth_code A reservation's authorization code
+   * @since 1.0
+   *
+   * @todo replace $res_id parameter with $this->res_id  
+   */
    public function get_res_auth_code($res_id) {
       $query = "SELECT auth_code FROM {$this->wpdb->phw_reservations} WHERE res_id = '{$res_id}'";
       $auth_code = $this->wpdb->get_row($query, ARRAY_A);
@@ -300,13 +343,24 @@ class PHWReserveReservationRequest {
       else
          $this->no_id_match_error();
    }
-   
+
+
+   /**
+   * Deletes a reservation from the table
+   *
+   * @param int $res_id Reservation ID 
+   * @return void
+   * @since 1.0
+   *
+   * @todo replace $res_id parameter with $this->res_id  
+   */  
    public function del_res($res_id) {
       if ($this->wpdb->delete($this->wpdb->phw_reservations, array('res_id' => $res_id)))
          echo "Reservation has been cancelled.";
       else
          $this->no_id_match_error();
    }
+
    
    /**
    * Updates existing reservation in database 
@@ -336,6 +390,12 @@ class PHWReserveReservationRequest {
       }
    }
    
+   
+   /**
+   * Display no res_id match error
+   *
+   * @todo make more robust to work with more errors
+   */
    private function no_id_match_error() {
       echo "ERROR: Reservation ID does not match existing reservation. Please contact "
            . antispambot(get_option('admin_email')) . " with this error.";

@@ -11,6 +11,7 @@
 
 
 /**
+* Reservation Request Form
 *
 * @since 1.0
 */
@@ -35,7 +36,6 @@ class PHWReserveForm {
 
    public $hasError;
    
-   // Error messages
    private $honeypotError;
    private $nameError;
    private $emailError;
@@ -45,13 +45,30 @@ class PHWReserveForm {
    private $purposeError;
    private $roomError;
 
+   /**
+   * Loads GET & POST variables, available rooms, and valid emails
+   *
+   * @param mixed $rooms Available rooms configured in plugin settings
+   * @param mixed $emails Valid email domains configured in plugin settings
+   * @since 1.0
+   */
    function __construct($rooms, $emails) {
-      $this->load_session_vars();
+      $this->load_get_post_vars();
       $this->rooms = $rooms;
       $this->valid_emails = $emails;
    }
    
-   private function load_session_vars() {
+   
+   /**
+   * Loads GET & POST variables into object properties
+   *
+   * Checks if the 'Make reservation' link was clicked on the View Room Availability
+   * page. converts entered dates & times to UNIX Timestamps.
+   *
+   * @since 1.0
+   */
+   private function load_get_post_vars() {
+      // POSTed from form
       $this->laylah = trim($_POST['laylah']);
       $this->patron_name = trim($_POST['patron_name']);
    	$this->patron_email = strtolower(trim($_POST['patron_email']));
@@ -64,11 +81,21 @@ class PHWReserveForm {
    	$this->time_date_valid = strtotime($this->time_date);
      	$this->time_start_valid = strtotime($this->time_start); 
    	$this->time_end_valid = strtotime($this->time_end);
-      if (isset($_GET['time_date'])) { // passed from 'make reservation' on calendar
+      // Passed from calendar via 'make reservation' link. Already timestamp.
+      if (isset($_GET['time_date'])) {
          $this->time_date_valid = $_GET['time_date'];
       }
    }
 
+   
+   /**
+   * Validates the form inputs
+   *
+   * Sets error variables if it runs into problems. 
+   *
+   * @return boolean True if validates without error
+   * @since 1.0
+   */
    public function validate_inputs() {
       if($this->laylah != '') {
      		$this->honeypotError = 'You may not be human, please try again. Do not enter a value into the field labeled <em>Required*</em>.';
@@ -147,7 +174,15 @@ class PHWReserveForm {
    * Echos HTML for reservation request form
    *
    * Displays the reservation request form. The same form is used for new requests and 
-   * edits of existing reservations. 
+   * edits of existing reservations. Displays errors if found by validate_inputs()
+   * method. Populates fields with any POSTed data.
+   *
+   * If editing, a checkbox to cancel reservation is included, as well as 2 hidden
+   * fields containing the auth_code and res_id. Submit name changes to 'submit_edit'
+   * for PHWReservePageController to identify submission was an edit.
+   *
+   * If loaded from calendar via 'make reservation' link,
+   * populates the user's selected date.
    *
    * @param boolean $editing True if user is editing existing reservation. Defaults to false
    * @return void
@@ -205,10 +240,12 @@ class PHWReserveForm {
  
    
    /**
-   * Fills form fields values on reservation request form
+   * Fills form fields values on reservation request form for an edit
    *
    * Sets the class properties with the given parameters. You should call this
    * method prior to display_form method if using form to edit existing reservation
+   * since a user didn't POST these to the form. Used by the 
+   * PHWReservePageController::handle_edit_res_request() method
    *
    * @param string $patron_name
    * @param string $patron_email

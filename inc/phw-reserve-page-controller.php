@@ -1,6 +1,7 @@
 <?php
 /**
 * Contains the PHWReservePageController class
+*
 * @author David Baker
 * @copyright 2015 Milligan College
 * @since 1.0
@@ -19,7 +20,7 @@ class PHWReservePageController {
    private $rooms;
    private $valid_emails;
 
-   // relevant session variables
+   // GET & POST variables
    public $sv_room_cal = false;    // on main menu - View room calendar
    public $sv_new_res = false;     // on main menu - Reserve a room
    public $sv_edit_res = false;    // on main menu - Change/delete reservation
@@ -43,13 +44,13 @@ class PHWReservePageController {
    * @since 1.0
    */
    public function init() {
-      $this->load_session_vars();
+      $this->load_get_post_vars();
       $this->handle_page_request();
    }
    
+   
    /**
-   * Loads settings
-   * Loads plugin settings and places them into arrays
+   * Loads plugin settings
    * @since 1.0
    */
    private function load_plugin_settings() {
@@ -58,7 +59,14 @@ class PHWReservePageController {
       $this->valid_emails = array_map('trim', explode("\n", $settings['valid_emails']));
    }
    
-   private function load_session_vars() {      // TODO: should I preload all of these or just test for them as needed?
+   
+   /**
+   * Loads GET and POST vars into object properties
+   *
+   * @since 1.0
+   * @todo Should I preload all of these or just test for them as needed?
+   */
+   private function load_get_post_vars() {
       if (isset($_GET['room_cal'])) $this->sv_room_cal = $_GET['room_cal'];
       if (isset($_GET['res_new'])) $this->sv_new_res = $_GET['res_new'];
       if (isset($_GET['res_edit'])) $this->sv_edit_res = $_GET['res_edit'];
@@ -191,6 +199,14 @@ class PHWReservePageController {
    }
    
    
+   /**
+   * Handles selection to View Room Availability
+   *
+   * Shows the calendar form. If room and month submitted, shows the listing
+   * of current reservations.
+   * 
+   * @since 1.0
+   */
    function handle_view_cal_request() {
       $calendar = new PHWReserveCalendar($this->rooms);
       $calendar->show_form();
@@ -200,16 +216,18 @@ class PHWReservePageController {
       }
    }
    
+   
    /**
    * Handes submission of an auth code from email
    *
    * Also deletes the transient after inserting res into table 
    *
    * @since 1.0
+   * @todo Should I load these GET variables beforehand?
    */
    private function handle_auth_code_submission() {
       $transient_name = $_GET['transient'];
-      $transient_data = get_transient($transient_name);     // TODO: load all of these session vars
+      $transient_data = get_transient($transient_name);
       $auth_code = $transient_data['auth_code'];
       if ($auth_code == $_GET['auth_code']) {
          $reservation = new PHWReserveReservationRequest($transient_data['patron_name'], 
@@ -229,9 +247,15 @@ class PHWReservePageController {
       }
    }
 
+   
    /**
    * Handles edit/cancel form submission
+   * 
+   * Checks if user selected to cancel reservation or edit reservation. Quickly 
+   * deletes if desired. If editing, displays info in form, validates changes, 
+   * checks for time conflicts, and updates table if all is well.
    *
+   * @since 1.0
    */
    private function handle_edit_res_submission() {
       $res_id = $_POST['res_id'];

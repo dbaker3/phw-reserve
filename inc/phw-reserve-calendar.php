@@ -1,18 +1,42 @@
 <?php
-/*
-   PHWReserveCalendar class
-   David Baker, Milligan College 2015
+/**
+* Contains the PHWReserveCalendar class
+*
+* @author David Baker
+* @copyright 2015 Milligan College
+* @since 1.0
 */
 
+
+/**
+* Calendar or View Room Availability class
+*
+* Allows user to select room and month to view current reservations that exist.
+* Has option to create a reservation from each day listed. Logged in users see
+* most reservation data. Non-logged in users only see dates and times.
+*
+* @since 1.0
+*/
 class PHWReserveCalendar {
    private $rooms;
    private $selected_room;
    private $selected_month;
 
+   /**
+   * Set available rooms setting
+   * @param mixed $rooms Available rooms configured in plugin settings
+   * @since 1.0
+   */
    function __construct($rooms) {
       $this->rooms = $rooms;
    }
    
+   
+   /**
+   * Displays HTML for room and month form
+   *
+   * @since 1.0
+   */
    public function show_form() { ?>
       <div class="welshimer-form">
          <form>
@@ -44,10 +68,9 @@ class PHWReserveCalendar {
 
 
    /**
-   *
-   *
+   * Calls methods to show existing reservations
+   * @since 1.0
    * @todo check against transients
-   * @todo show more res info if logged in
    * @todo change MySQL dependent query
    */
    public function show_reservations() {
@@ -56,6 +79,11 @@ class PHWReserveCalendar {
    }
    
    
+   /**
+   * Gets reservation data from table 
+   * @return mixed $results Reservation data for selected room and month
+   * @since 1.0
+   */
    private function query_db() {
       $this->selected_room = $_GET['room_cal'];
       $this->selected_month = strtotime($_GET['room_month']);
@@ -72,7 +100,13 @@ class PHWReserveCalendar {
       return $wpdb->get_results($query, ARRAY_A);
    }
    
-   
+   /**
+   * Displays reservation calendar
+   *
+   * @param mixed $results Reservation data for selected room and month
+   * @since 1.0
+   * @todo allow logged in use to delete reservations
+   */
    private function print_reservations($results) {
       echo "<h4>Existing reservations for {$this->selected_room} during " . date('F Y', $this->selected_month) . "</h4>";
       $days_in_month = date('t', $this->selected_month);
