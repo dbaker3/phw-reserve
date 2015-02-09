@@ -28,6 +28,7 @@ class PHWReservePageController {
    public $sv_submit_new = false;  // on submitting form for new reservation
    public $sv_auth_code = false;   // on clicking auth code link in email
    public $sv_submit_edit = false; // on submitting form for editing reservation
+   public $sv_submit_del = false;  // on logged in user clicking delete on res
 
    
    /**
@@ -73,6 +74,7 @@ class PHWReservePageController {
       if (isset($_POST['submit_new'])) $this->sv_submit_new = true;
       if (isset($_GET['auth_code'])) $this->sv_auth_code = $_GET['auth_code'];
       if (isset($_POST['submit_edit'])) $this->sv_submit_edit = true;
+      if (isset($_GET['submit_del'])) $this->sv_submit_del = true;
    }
    
    /**
@@ -113,6 +115,10 @@ class PHWReservePageController {
          $this->handle_edit_res_submission();
       }
       
+      elseif ($this->sv_submit_del) {
+         $this->handle_del_res_submission();
+      }
+      
       // Initial Page Load
       else {
          $menu = new PHWReserveMenu($this->rooms);
@@ -145,8 +151,10 @@ class PHWReservePageController {
             $form->display_form();
          }
          else {
-            if (is_user_logged_in())
+            if (is_user_logged_in()) {
+               $reservation->create_auth_code();
                $reservation->insert_into_db();
+            }
             else
                $reservation->authenticate_user();
          }
@@ -293,6 +301,34 @@ class PHWReservePageController {
             echo "ERROR: Authorization code does not match requested reservation. Please contact " 
                  . antispambot(get_option('admin_email')) . " with this error.";
             wp_die();        
+      }
+   }
+   
+   
+   /**
+   * Handles logged in user's request to delete a reservation
+   *
+   * Checks that user is logged in and also checks auth code before deleting
+   * the reservation.
+   *
+   * @since 1.0
+   */
+   private function handle_del_res_submission() {
+      $res_id = $_GET['res_id'];
+      if (is_user_logged_in()) {
+         $reservation = new PHWReserveReservationRequest();
+         $res_auth_code = $reservation->get_res_auth_code($res_id);
+         if ($_GET['auth'] == $res_auth_code) {
+            $reservation->del_res($res_id);
+         }
+         else {
+            echo "ERROR: Authorization code does not match requested reservation. Please contact " 
+                 . antispambot(get_option('admin_email')) . " with this error.";
+            wp_die();                
+         }
+      }
+      else {
+         echo 'You are not logged in.';
       }
    }
    

@@ -42,7 +42,7 @@ class PHWReserveCalendar {
          <form>
             <p class="form">
             <label class="label" for="room_cal">Room:</label>
-            <select class="text half" name='room_cal' id='room_cal' required>
+            <select class="text three-fourths" name='room_cal' id='room_cal' required>
                <?php foreach ($this->rooms as $room) { 
                echo "<option";
                if ($room == $_GET['room_cal']) {echo " selected";};
@@ -52,7 +52,7 @@ class PHWReserveCalendar {
             </p>
             <p class="form">
             <label class="label" for="room_month">Month:</label>
-            <select class="text half" name='room_month' id='room_month' required>
+            <select class="text three-fourths" name='room_month' id='room_month' required>
                <?php for ($i = 0; $i < 12; $i++) {
                echo "<option";
                if (isset($_GET['room_month']) && date('n', strtotime('this month + ' . $i . " month")) == date('n', strtotime($_GET['room_month']))) {echo " selected";};
@@ -60,7 +60,7 @@ class PHWReserveCalendar {
                } ?>
             </select>
             </p>
-            <button class='submit three-fourths' type='submit' name='view_cal' value='true'>View</button>
+            <button class='submit full' type='submit' name='view_cal' value='true'>View</button>
          </form>
       </div>
    <?php
@@ -92,13 +92,15 @@ class PHWReserveCalendar {
       }
       global $wpdb;
       $wpdb->phw_reservations = "{$wpdb->prefix}phw_reservations";
-      $query = "SELECT datetime_start, datetime_end, patron_name, patron_email, purpose
+      $query = "SELECT res_id, datetime_start, datetime_end, patron_name, patron_email, purpose, auth_code
                 FROM {$wpdb->phw_reservations}
                 WHERE 
                 '{$this->selected_room}' = room AND
-                FROM_UNIXTIME({$this->selected_month}, '%c') = FROM_UNIXTIME(datetime_start, '%c')";
+                FROM_UNIXTIME({$this->selected_month}, '%c') = FROM_UNIXTIME(datetime_start, '%c')
+                ORDER BY datetime_start";
       return $wpdb->get_results($query, ARRAY_A);
    }
+   
    
    /**
    * Displays reservation calendar
@@ -121,7 +123,11 @@ class PHWReserveCalendar {
             $res_date = date('MjY', $res['datetime_start']);
             $cur_date = date('M', $this->selected_month) . $i . date('Y', $this->selected_month);
             if ($res_date == $cur_date) {
-               echo "<li>Reserved " . date('g:i a', $res['datetime_start']) . " - " . date('g:i a', $res['datetime_end']);
+               echo "<li class='res-info'>";
+               if (is_user_logged_in()) {
+                  echo " <a href='?res_id={$res['res_id']}&amp;submit_del=true&amp;auth={$res['auth_code']}' onclick='return confirm(\"Are you sure you want to delete this reservation?\")'  class='res-del'>delete</a> ";
+               }
+               echo "Reserved " . date('g:i a', $res['datetime_start']) . " - " . date('g:i a', $res['datetime_end']);
                if (is_user_logged_in()) {
                   echo " by " . $res['patron_name'] . " (" . $res['patron_email'] . ") for " . $res['purpose'];
                }

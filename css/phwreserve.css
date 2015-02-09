@@ -5,9 +5,29 @@
 .day-head {
    border:1px solid black;
    padding: 5px;
-   border-radius:2px;
+   border-radius: 2px;
    background: #f6f6f6;
-   font-size: 90%
+   font-size: 90%;
+}
+
+.res-info {
+   font-size: 90%;
+}
+
+.res-del {
+   font-size: 80%;
+   border: 1px solid #888;
+   border-radius: 2px;
+   background: #dcc;
+   padding: 0 0.25em 0 0.25em;
+   text-decoration: none;
+   cursor: pointer;
+}
+
+.res-del:hover {
+   background: #d55;
+   color: #fff;
+   border: 1px solid #000;
 }
 
 .make-res {
@@ -15,3 +35,6 @@
    font-size:80%;
 }
 
+.recur-hidden {
+   display: none;
+}

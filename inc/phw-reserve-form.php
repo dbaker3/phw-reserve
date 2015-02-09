@@ -111,7 +111,10 @@ class PHWReserveForm {
    		$this->emailError = 'You must enter your email address.';
    		$this->hasError = true;
    	} elseif (!in_array(substr($this->patron_email, strrpos($this->patron_email, '@') + 1), $this->valid_emails)) {
-         $this->emailError = 'The email address you entered is not authorized to request a reservation.';
+         $this->emailError = 'Your email address must end in one of the following:';
+         foreach ($this->valid_emails as $valid_email) {
+            $this->emailError .=  " " . $valid_email;
+         }
          $this->hasError = true;
       } elseif (!is_email($this->patron_email)) {
          $this->emailError = 'You must enter a valid email address.';
@@ -148,8 +151,10 @@ class PHWReserveForm {
    		$this->timeEndError = 'The end time must be later than the start time.';
    		$this->hasError = true;
    	} else if ($this->time_end_valid - $this->time_start_valid > 14400 && $this->time_start_valid !== false) {  // TODO: Option for time block length
-   		$this->timeEndError = 'You may not reserve a room for more than four hours at a time.';
-   		$this->hasError = true;
+         if (!is_user_logged_in()) {
+      		$this->timeEndError = 'You may not reserve a room for more than four hours at a time.';
+            $this->hasError = true;
+         }
    	}
    
    	if($this->patron_purpose === '') {
@@ -207,11 +212,13 @@ class PHWReserveForm {
 		<?php endif; ?>
          
       <form action="<?php the_permalink(); ?>" method="post">
+         <?php if ($editing) { echo "<p class='form'><label class='label' for='del_res'>Cancel Reservation</label><input type='checkbox' id='del_res' name='del_res'></p>"; } ?>
 			<p class="form"><label class="label" for="patron_name">Name:* </label><input tabindex="1" class="text three-fourths<?php if(isset($this->nameError)){echo ' fail';}?>" type="text" id="patron_name" name="patron_name" value="<?php if(isset($this->patron_name)){echo $this->patron_name;} ?>" <?php if($editing){echo 'readonly';} ?>/></p>
 			<p class="form"><label class="label" for="patron_email">Email:* </label><input tabindex="2" class="text three-fourths<?php if(isset($this->emailError)){echo ' fail';}?>" type="email" id="patron_email" name="patron_email" value="<?php if(isset($this->patron_email)){echo $this->patron_email;} ?>" <?php if($editing){echo 'readonly';} ?>/></p>
 			<p class="form"><label class="label" for="time_date">Date:* </label><input tabindex="3" class="text half<?php if(isset($this->dateError)){echo ' fail';}?>" type="date" id="time_date" name="time_date" value="<?php if($this->time_date_valid){echo date('n/j/Y', $this->time_date_valid);} ?>" /></p>
 			<p class="form"><label class="label" for="time_start">Start Time:* </label><input tabindex="4" class="text half<?php if(isset($this->timeStartError)){echo ' fail';}?>" type="text" id="time_start" name="time_start" value="<?php if($this->time_start_valid){echo date('g:i A', $this->time_start_valid);} ?>" /></p>
 			<p class="form"><label class="label" for="time_end">End Time:* </label><input tabindex="5" class="text half<?php if(isset($this->timeEndError)){echo ' fail';}?>" type="text" id="time_end" name="time_end" value="<?php if($this->time_end_valid){echo date('g:i A', $this->time_end_valid);} ?>" /></p>
+
 			<p class="form"><label class="label" for="patron_purpose">Purpose:* </label><input tabindex="6" class="text<?php if(isset($this->purposeError)){echo ' fail';}?>" type="text" id="patron_purpose" name="patron_purpose" value="<?php if(isset($this->patron_purpose)){echo $this->patron_purpose;} ?>" /></p>
 			<p class="laylah"><label for="laylah">Required:*</label><input type="text" id="laylah" name="laylah" tabindex="999" /></p>
 			<p class="form"><label class="label" for="reserve_room">Room:* </label><select tabindex="7" class="text half<?php if(isset($this->roomError)){echo ' fail';}?>" id="reserve_room" name="reserve_room" >
@@ -223,9 +230,21 @@ class PHWReserveForm {
 			</p>
 			<p class="form">
          <?php 
+         if (is_user_logged_in()) { ?>
+            <p class="form"><label class="label" for="recurs">Recurring: </label><input type="checkbox" id="recurs" name="recurs"></p>
+            <div id="recur-opts" class="recur-hidden">
+            <p class="form"><label class="label" for="">Recurs Every:* </label><input type="checkbox" id="recurs_sun" name="recurs_sun"><label for="recurs_sun">Sun</label>
+                                                                              <input type="checkbox" id="recurs_mon" name="recurs_mon"><label for="recurs_mon">Mon</label>
+                                                                              <input type="checkbox" id="recurs_tue" name="recurs_tue"><label for="recurs_tue">Tue</label>                                                                                      
+                                                                              <input type="checkbox" id="recurs_wed" name="recurs_wed"><label for="recurs_wed">Wed</label>
+                                                                              <input type="checkbox" id="recurs_thu" name="recurs_thu"><label for="recurs_thu">Thu</label>
+                                                                              <input type="checkbox" id="recurs_fri" name="recurs_fri"><label for="recurs_fri">Fri</label>
+                                                                              <input type="checkbox" id="recurs_sat" name="recurs_sat"><label for="recurs_sat">Sat</label></p>
+            <p class="form"><label class="label" for="recurs_until">Recurs until:* </label><input type="date" class="text half" id="recurs_until" name="recurs_until"></p>
+            </div><?php
+         } 
          if ($editing) {
-            echo "<label class='label' for='del_res'>Cancel Reservation</label><input type='checkbox' id='del_res' name='del_res'>" 
-                 . "<input class='submit full' type='submit' name='submit_edit' value='Save Changes' tabindex='11' >"
+            echo "<input class='submit full' type='submit' name='submit_edit' value='Save Changes' tabindex='11' >"
                  . "<input type='hidden' name='auth' value='{$_GET['auth']}'>"
                  . "<input type='hidden' name='res_id' value='{$_GET['res_id']}'>";
          }

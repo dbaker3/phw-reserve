@@ -31,10 +31,13 @@ function phw_reserve_shortcode() {
 add_shortcode('phw-reserve-page', 'phw_reserve_shortcode');
 
 /**
-* Enqueues CSS file for plugin
+* Enqueues CSS and scripts for plugin
 * @since 1.0
 */
-function phwreserve_enqueue_style() {
-	wp_enqueue_style( 'phwreserve', plugin_dir_url(__FILE__) . 'css/phwreserve.css');
+function phwreserve_enqueue_files() {
+	wp_enqueue_style('phwreserve_css', plugin_dir_url(__FILE__) . 'css/phwreserve.css');
+   wp_enqueue_script('phwreserve_js', plugin_dir_url(__FILE__) . 'js/phwreserve.js');
+   wp_enqueue_script('timepicker_js', plugin_dir_url(__FILE__) . 'timepicker/jquery.timepicker.min.js');
+   wp_enqueue_style('timepicker_css', plugin_dir_url(__FILE__) . 'timepicker/jquery.timepicker.css');
 }
-add_action( 'wp_enqueue_scripts', 'phwreserve_enqueue_style' );
+add_action('wp_enqueue_scripts', 'phwreserve_enqueue_files');

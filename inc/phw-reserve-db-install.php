@@ -39,6 +39,9 @@ function phw_reserve_create_table() {
             purpose varchar(100) NOT NULL default '',
             room varchar(100) NOT NULL default '',
             auth_code varchar(20) NOT NULL default '',
+            recurs boolean NOT NULL default 0,
+            recurs_until bigint NOT NULL default 0,
+            recurs_every varchar(100) NOT NULL default '',
             PRIMARY KEY  (res_id)
             ) $charset_collate; ";
             

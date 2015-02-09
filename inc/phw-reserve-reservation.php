@@ -18,7 +18,7 @@
 * @since 1.0
 */
 class PHWReserveReservationRequest {
-   private $res_id;     // only set when res is being edited
+   private $res_id;
    private $patron_name;
    private $patron_email;
    private $datetime_start;
@@ -152,7 +152,7 @@ class PHWReserveReservationRequest {
    * @return void
    */
    public function authenticate_user() {
-      $this->auth_code = substr(md5(mt_rand()), -14);
+      $this->create_auth_code();
       
       $transient_name = 'phwreserve_' . time();
       $transient_data = array('patron_name'    => $this->patron_name,
@@ -167,6 +167,20 @@ class PHWReserveReservationRequest {
       $this->send_auth_code_email($transient_name);
    }
 
+   
+   /**
+   * Creates authorization code for a reservation
+   *
+   * Creates code and saves it to the auth_code property of the current 
+   * PHWReserveReservationRequest object. Codes are the last 14 digits of an
+   * MD5 hash of a pseudo-random number.
+   *
+   * @since 1.0
+   */
+   public function create_auth_code() {
+      $this->auth_code = substr(md5(mt_rand()), -14);  
+   }
+   
    
    /**
    * Generates and sends email contaiing authorization URL to requestor.
