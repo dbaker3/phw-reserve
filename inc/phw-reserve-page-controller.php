@@ -21,15 +21,29 @@ class PHWReservePageController {
    private $valid_emails;
 
    // GET & POST variables
-   public $sv_room_cal = false;    // on main menu - View room calendar
-   public $sv_new_res = false;     // on main menu - Reserve a room
-   public $sv_edit_res = false;    // on main menu - Change/delete reservation
+   private $menu_room_cal = false;    // on main menu - View room calendar
+   private $menu_new_res = false;     // on main menu - Reserve a room
    
-   public $sv_submit_new = false;  // on submitting form for new reservation
-   public $sv_auth_code = false;   // on clicking auth code link in email
-   public $sv_submit_edit = false; // on submitting form for editing reservation
-   public $sv_submit_del = false;  // on logged in user clicking delete on res
+   
+   private $email_edit_res = false;    // on clicking edit/cancel link in email
+   
+   private $form_submit_new = false;  // on submitting form for new reservation
+   private $email_auth_code = false;   // on clicking auth code link in email
+   private $sv_submit_edit = false; // on submitting form for editing reservation
+   
+   // PHWReserveReservationRequest
+   private $email_res_id = false; 
+   
+   // PHWReserveForm
+   private $email_auth = false;
 
+   // PHWReserveCalendar
+   private $cal_view_cal = false;
+   private $cal_room = false;
+   private $cal_month = false;
+   private $cal_res_id = false;
+   private $cal_auth = false;
+   private $cal_submit_del = false;  // on logged in user clicking delete on res
    
    /**
    * Class constructor
@@ -68,13 +82,26 @@ class PHWReservePageController {
    * @todo Should I preload all of these or just test for them as needed?
    */
    private function load_get_post_vars() {
-      if (isset($_GET['room_cal'])) $this->sv_room_cal = $_GET['room_cal'];
-      if (isset($_GET['res_new'])) $this->sv_new_res = $_GET['res_new'];
-      if (isset($_GET['res_edit'])) $this->sv_edit_res = $_GET['res_edit'];
-      if (isset($_POST['submit_new'])) $this->sv_submit_new = true;
-      if (isset($_GET['auth_code'])) $this->sv_auth_code = $_GET['auth_code'];
+      if (isset($_GET['menu_room_cal'])) $this->menu_room_cal = $_GET['menu_room_cal'];
+      if (isset($_GET['menu_res_new'])) $this->menu_new_res = $_GET['menu_res_new'];
+      if (isset($_POST['submit_new'])) $this->form_submit_new = true;
+      if (isset($_GET['auth_code'])) $this->email_auth_code = $_GET['auth_code'];
       if (isset($_POST['submit_edit'])) $this->sv_submit_edit = true;
-      if (isset($_GET['submit_del'])) $this->sv_submit_del = true;
+      
+      // PHWReserveForm
+      if (isset($_GET['email_auth'])) $this->email_auth = $_GET['email_auth'];
+      
+      
+      // PHWReserveReservationRequest
+      if (isset($_GET['email_res_id'])) $this->email_res_id = $_GET['email_res_id'];
+      
+      // PHWReserveCalendar
+      if (isset($_GET['cal_view_cal'])) $this->cal_view_cal = $_GET['cal_view_cal'];
+      if (isset($_GET['cal_room'])) $this->cal_room = $_GET['cal_room'];
+      if (isset($_GET['cal_month'])) $this->cal_month = $_GET['cal_month'];
+      if (isset($_GET['cal_res_id'])) $this->cal_res_id = $_GET['cal_res_id'];
+      if (isset($_GET['cal_auth'])) $this->cal_auth = $_GET['cal_auth'];
+      if (isset($_GET['submit_del'])) $this->cal_submit_del = true;
    }
    
    /**
@@ -86,27 +113,27 @@ class PHWReservePageController {
    */
    private function handle_page_request() {
       // Selected - View Room Calendar
-      if ($this->sv_room_cal) {
-         $this->handle_view_cal_request();
+      if ($this->menu_room_cal || $this->cal_view_cal) {
+         $this->handle_cal_request();
       }
       
       // Selected - Reserve a Room
-      elseif ($this->sv_new_res) {
+      elseif ($this->menu_new_res) {
          $this->handle_new_res_request();
       }
       
-      // Clicked edit link in email or Selected - Change or Cancel Reservation
-      elseif ($this->sv_edit_res) {
-         $this->handle_edit_res_request();
+      // Clicked edit link in email 
+      elseif ($this->email_res_id) {
+         $this->handle_email_edit_res_request();
       }
       
       // Submitted new reservation form
-      elseif ($this->sv_submit_new) {
+      elseif ($this->form_submit_new) {
          $this->handle_new_res_submission();
       }
       
       // Clicked authentication code link in email
-      elseif ($this->sv_auth_code) {
+      elseif ($this->email_auth_code) {
          $this->handle_auth_code_submission();
       }
       
@@ -115,7 +142,7 @@ class PHWReservePageController {
          $this->handle_edit_res_submission();
       }
       
-      elseif ($this->sv_submit_del) {
+      elseif ($this->cal_submit_del) {
          $this->handle_del_res_submission();
       }
       
@@ -184,18 +211,20 @@ class PHWReservePageController {
    * @since 1.0
    * @todo how will admin edit/deletes be handled?
    */
-   private function handle_edit_res_request() {
+   private function handle_email_edit_res_request() {
       $form = new PHWReserveForm($this->rooms, $this->emails);
-      if (isset($_GET['res_id'])) {
+      if (isset($this->email_res_id)) {
          $reservation = new PHWReserveReservationRequest();
-         $res_data = $reservation->get_res_data($_GET['res_id']);
-         if ($res_data['auth_code'] == $_GET['auth']) {
-            $form->set_form_fields($res_data['patron_name'], 
+         $res_data = $reservation->get_res_data($this->email_res_id);
+         if ($res_data['auth_code'] == $this->email_auth) {
+            $form->set_form_fields($res_data['res_id'],
+                                   $res_data['patron_name'], 
                                    $res_data['patron_email'],
                                    $res_data['datetime_start'],
                                    $res_data['datetime_end'],
                                    $res_data['purpose'], 
-                                   $res_data['room']);
+                                   $res_data['room'],
+                                   $res_data['auth_code']);
             $form->display_form(true);
          }
          else {
@@ -215,13 +244,20 @@ class PHWReservePageController {
    * 
    * @since 1.0
    */
-   function handle_view_cal_request() {
+   function handle_cal_request() {
+      if ($this->cal_room && $this->cal_month) 
+         $submitted = true;
+      else
+         $submitted = false;
+
       $calendar = new PHWReserveCalendar($this->rooms);
+
+      if ($submitted) 
+         $calendar->set_fields($this->cal_room, $this->cal_month);
+
       $calendar->show_form();
-      
-      if (isset($_GET['view_cal'])) {
+      if ($submitted) 
          $calendar->show_reservations();
-      }
    }
    
    
@@ -237,7 +273,7 @@ class PHWReservePageController {
       $transient_name = $_GET['transient'];
       $transient_data = get_transient($transient_name);
       $auth_code = $transient_data['auth_code'];
-      if ($auth_code == $_GET['auth_code']) {
+      if ($auth_code == $this->email_auth_code) {
          $reservation = new PHWReserveReservationRequest($transient_data['patron_name'], 
                                                          $transient_data['patron_email'], 
                                                          $transient_data['datetime_start'], 
@@ -314,11 +350,11 @@ class PHWReservePageController {
    * @since 1.0
    */
    private function handle_del_res_submission() {
-      $res_id = $_GET['res_id'];
+      $res_id = $this->cal_res_id;
       if (is_user_logged_in()) {
          $reservation = new PHWReserveReservationRequest();
          $res_auth_code = $reservation->get_res_auth_code($res_id);
-         if ($_GET['auth'] == $res_auth_code) {
+         if ($this->cal_auth == $res_auth_code) {
             $reservation->del_res($res_id);
          }
          else {

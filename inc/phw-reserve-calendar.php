@@ -19,8 +19,10 @@
 */
 class PHWReserveCalendar {
    private $rooms;
-   private $selected_room;
-   private $selected_month;
+   
+   private $cal_room;
+   private $cal_month;
+   private $cal_month_timestamp;
 
    /**
    * Set available rooms setting
@@ -29,6 +31,12 @@ class PHWReserveCalendar {
    */
    function __construct($rooms) {
       $this->rooms = $rooms;
+   }
+   
+   
+   public function set_fields($cal_room, $cal_month) {
+      $this->cal_room = $cal_room;
+      $this->cal_month = $cal_month;
    }
    
    
@@ -41,26 +49,26 @@ class PHWReserveCalendar {
       <div class="welshimer-form">
          <form>
             <p class="form">
-            <label class="label" for="room_cal">Room:</label>
-            <select class="text three-fourths" name='room_cal' id='room_cal' required>
+            <label class="label" for="cal_room">Room:</label>
+            <select class="text three-fourths" name='cal_room' id='cal_room' required>
                <?php foreach ($this->rooms as $room) { 
                echo "<option";
-               if ($room == $_GET['room_cal']) {echo " selected";};
+               if ($room == $this->cal_room) {echo " selected";};
                echo ">{$room}</option>";
                } ?>
             </select>
             </p>
             <p class="form">
-            <label class="label" for="room_month">Month:</label>
-            <select class="text three-fourths" name='room_month' id='room_month' required>
+            <label class="label" for="cal_month">Month:</label>
+            <select class="text three-fourths" name='cal_month' id='cal_month' required>
                <?php for ($i = 0; $i < 12; $i++) {
                echo "<option";
-               if (isset($_GET['room_month']) && date('n', strtotime('this month + ' . $i . " month")) == date('n', strtotime($_GET['room_month']))) {echo " selected";};
+               if (isset($this->cal_month) && date('n', strtotime('this month + ' . $i . " month")) == date('n', strtotime($this->cal_month))) {echo " selected";};
                echo ">" . date('F', strtotime('this month + ' . $i . " month")) . "</option>";
                } ?>
             </select>
             </p>
-            <button class='submit full' type='submit' name='view_cal' value='true'>View</button>
+            <button class='submit full' type='submit' name='cal_view_cal' value='true'>View</button>
          </form>
       </div>
    <?php
@@ -85,18 +93,17 @@ class PHWReserveCalendar {
    * @since 1.0
    */
    private function query_db() {
-      $this->selected_room = $_GET['room_cal'];
-      $this->selected_month = strtotime($_GET['room_month']);
-      if (date('n') > date('n', $this->selected_month)) {
-         $this->selected_month = strtotime(date('M', $this->selected_month) . "+ 1 year");
+      $this->cal_month_timestamp = strtotime($this->cal_month);
+      if (date('n') > date('n', $this->cal_month_timestamp)) {
+         $this->cal_month_timestamp = strtotime(date('M', $this->cal_month_timestamp));
       }
       global $wpdb;
       $wpdb->phw_reservations = "{$wpdb->prefix}phw_reservations";
       $query = "SELECT res_id, datetime_start, datetime_end, patron_name, patron_email, purpose, auth_code
                 FROM {$wpdb->phw_reservations}
                 WHERE 
-                '{$this->selected_room}' = room AND
-                FROM_UNIXTIME({$this->selected_month}, '%c') = FROM_UNIXTIME(datetime_start, '%c')
+                '{$this->cal_room}' = room AND
+                FROM_UNIXTIME({$this->cal_month_timestamp}, '%c') = FROM_UNIXTIME(datetime_start, '%c')
                 ORDER BY datetime_start";
       return $wpdb->get_results($query, ARRAY_A);
    }
@@ -110,22 +117,22 @@ class PHWReserveCalendar {
    * @todo allow logged in use to delete reservations
    */
    private function print_reservations($results) {
-      echo "<h4>Existing reservations for {$this->selected_room} during " . date('F Y', $this->selected_month) . "</h4>";
-      $days_in_month = date('t', $this->selected_month);
+      echo "<h4>Existing reservations for {$this->cal_room} during " . date('F Y', $this->cal_month_timestamp) . "</h4>";
+      $days_in_month = date('t', $this->cal_month_timestamp);
       for ($i = 1; $i <= $days_in_month; $i++) {
-         if (strtotime(date('n/', $this->selected_month) . $i . date('/Y', $this->selected_month)) < strtotime(date('n/j/Y'))) {
+         if (strtotime(date('n/', $this->cal_month_timestamp) . $i . date('/Y', $this->cal_month_timestamp)) < strtotime(date('n/j/Y'))) {
             continue;   // don't print dates before today
          }
-         $the_date = strtotime(date('F', $this->selected_month) . " " . $i . " " . date('Y', $this->selected_month));
-         echo "<div class='day-head'>" . date('F', $this->selected_month) . " {$i}<span class='make-res'><a href='?res_new=true&time_date={$the_date}'>make reservation</a></span></div>";
+         $the_date = strtotime(date('F', $this->cal_month_timestamp) . " " . $i . " " . date('Y', $this->cal_month_timestamp));
+         echo "<div class='day-head'>" . date('F', $this->cal_month_timestamp) . " {$i}<span class='make-res'><a href='?res_new=true&time_date={$the_date}'>make reservation</a></span></div>";
          echo "<ul>";
          foreach ($results as $res) {
             $res_date = date('MjY', $res['datetime_start']);
-            $cur_date = date('M', $this->selected_month) . $i . date('Y', $this->selected_month);
+            $cur_date = date('M', $this->cal_month_timestamp) . $i . date('Y', $this->cal_month_timestamp);
             if ($res_date == $cur_date) {
                echo "<li class='res-info'>";
                if (is_user_logged_in()) {
-                  echo " <a href='?res_id={$res['res_id']}&amp;submit_del=true&amp;auth={$res['auth_code']}' onclick='return confirm(\"Are you sure you want to delete this reservation?\")'  class='res-del'>delete</a> ";
+                  echo " <a href='?cal_res_id={$res['res_id']}&amp;submit_del=true&amp;cal_auth={$res['auth_code']}' onclick='return confirm(\"Are you sure you want to delete this reservation?\")'  class='res-del'>delete</a> ";
                }
                echo "Reserved " . date('g:i a', $res['datetime_start']) . " - " . date('g:i a', $res['datetime_end']);
                if (is_user_logged_in()) {

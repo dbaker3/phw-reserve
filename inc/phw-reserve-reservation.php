@@ -274,7 +274,7 @@ class PHWReserveReservationRequest {
    * @todo option for reply address
    */
    private function send_confirmed_email($res_id) {
-      $conf_url = get_permalink() . '?res_edit=true&res_id=' . $res_id . '&auth=' . $this->auth_code;
+      $conf_url = get_permalink() . '?email_res_id=' . $res_id . '&email_auth=' . $this->auth_code;
     	$emailTo = $this->patron_email;
 		$subject = 'Room Reservation Confirmation';
       $body = "<h3>Reservation Confirmed!</h3>";

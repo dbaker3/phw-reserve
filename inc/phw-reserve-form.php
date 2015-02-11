@@ -245,8 +245,8 @@ class PHWReserveForm {
          } 
          if ($editing) {
             echo "<input class='submit full' type='submit' name='submit_edit' value='Save Changes' tabindex='11' >"
-                 . "<input type='hidden' name='auth' value='{$_GET['auth']}'>"
-                 . "<input type='hidden' name='res_id' value='{$_GET['res_id']}'>";
+                 . "<input type='hidden' name='auth' value='{$this->auth_code}'>"
+                 . "<input type='hidden' name='res_id' value='{$this->res_id}'>";
          }
          else {
             echo "<input class='submit full' type='submit' name='submit_new' value='Send Request' tabindex='11' >"; 
@@ -276,7 +276,8 @@ class PHWReserveForm {
    * @return void
    * @since 1.0
    */
-   public function set_form_fields($patron_name, $patron_email, $time_start, $time_end, $patron_purpose, $reserve_room) {
+   public function set_form_fields($res_id, $patron_name, $patron_email, $time_start, $time_end, $patron_purpose, $reserve_room, $auth_code) {
+      $this->res_id = $res_id;
       $this->patron_name = $patron_name;
       $this->patron_email = $patron_email;
       $this->time_date_valid = $time_start;
@@ -284,5 +285,6 @@ class PHWReserveForm {
       $this->time_end_valid = $time_end;
       $this->patron_purpose = $patron_purpose;
       $this->reserve_room = $reserve_room;
+      $this->auth_code = $auth_code;
    }
 }
