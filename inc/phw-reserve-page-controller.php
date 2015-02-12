@@ -24,7 +24,6 @@ class PHWReservePageController {
    private $menu_room_cal = false;    // on main menu - View room calendar
    private $menu_new_res = false;     // on main menu - Reserve a room
    
-   
    private $email_edit_res = false;    // on clicking edit/cancel link in email
    
    private $form_submit_new = false;  // on submitting form for new reservation

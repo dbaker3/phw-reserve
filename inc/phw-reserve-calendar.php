@@ -34,6 +34,10 @@ class PHWReserveCalendar {
    }
    
    
+   /**
+   * Set objects selected room and month properties
+   * @since 1.0
+   */
    public function set_fields($cal_room, $cal_month) {
       $this->cal_room = $cal_room;
       $this->cal_month = $cal_month;

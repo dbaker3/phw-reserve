@@ -19,7 +19,7 @@ class PHWReserveForm {
    private $rooms;
    private $valid_emails;
 
-   // Session variables
+   // GET & POST variables
    private $laylah;
    public $patron_name;
    public $patron_email;
@@ -29,10 +29,14 @@ class PHWReserveForm {
    public $patron_purpose;
    public $reserve_room;
    private $patron_message;
+   public $recurs;
+   public $recurs_until;
+   public $recurs_on = array();
    
    public $time_date_valid;
    public $time_start_valid;
    public $time_end_valid;
+   public $recurs_until_valid;
 
    public $hasError;
    
@@ -81,6 +85,16 @@ class PHWReserveForm {
    	$this->time_date_valid = strtotime($this->time_date);
      	$this->time_start_valid = strtotime($this->time_start); 
    	$this->time_end_valid = strtotime($this->time_end);
+      if (isset($_POST['recurs'])) $this->recurs = true;
+      $this->recurs_until = trim($_POST['recurs_until']);
+      $this->recurs_until_valid = strtotime($this->recurs_until);
+      if (isset($_POST['recurs_sun'])) $this->recurs_on['sun'] = true;
+      if (isset($_POST['recurs_mon'])) $this->recurs_on['mon'] = true;
+      if (isset($_POST['recurs_tue'])) $this->recurs_on['tue'] = true;
+      if (isset($_POST['recurs_wed'])) $this->recurs_on['wed'] = true;
+      if (isset($_POST['recurs_thu'])) $this->recurs_on['thu'] = true;
+      if (isset($_POST['recurs_fri'])) $this->recurs_on['fri'] = true;
+      if (isset($_POST['recurs_sat'])) $this->recurs_on['sat'] = true;
       // Passed from calendar via 'make reservation' link. Already timestamp.
       if (isset($_GET['time_date'])) {
          $this->time_date_valid = $_GET['time_date'];
@@ -231,15 +245,15 @@ class PHWReserveForm {
 			<p class="form">
          <?php 
          if (is_user_logged_in()) { ?>
-            <p class="form"><label class="label" for="recurs">Recurring: </label><input type="checkbox" id="recurs" name="recurs"></p>
+            <p class="form"><label class="label" for="recurs">Recurring: </label><input type="checkbox" id="recurs" name="recurs" <?php if ($this->recurs) echo 'checked' ?>></p>
             <div id="recur-opts" class="recur-hidden">
-            <p class="form"><label class="label" for="">Recurs Every:* </label><input type="checkbox" id="recurs_sun" name="recurs_sun"><label for="recurs_sun">Sun</label>
-                                                                              <input type="checkbox" id="recurs_mon" name="recurs_mon"><label for="recurs_mon">Mon</label>
-                                                                              <input type="checkbox" id="recurs_tue" name="recurs_tue"><label for="recurs_tue">Tue</label>                                                                                      
-                                                                              <input type="checkbox" id="recurs_wed" name="recurs_wed"><label for="recurs_wed">Wed</label>
-                                                                              <input type="checkbox" id="recurs_thu" name="recurs_thu"><label for="recurs_thu">Thu</label>
-                                                                              <input type="checkbox" id="recurs_fri" name="recurs_fri"><label for="recurs_fri">Fri</label>
-                                                                              <input type="checkbox" id="recurs_sat" name="recurs_sat"><label for="recurs_sat">Sat</label></p>
+            <p class="form"><label class="label" for="">Recurs Every:* </label><input type="checkbox" id="recurs_sun" name="recurs_sun" <?php if ($this->recurs_on['sun']) echo 'checked' ?>><label for="recurs_sun">Sun</label>
+                                                                               <input type="checkbox" id="recurs_mon" name="recurs_mon" <?php if ($this->recurs_on['mon']) echo 'checked'?>><label for="recurs_mon">Mon</label>
+                                                                               <input type="checkbox" id="recurs_tue" name="recurs_tue" <?php if ($this->recurs_on['tue']) echo 'checked' ?>><label for="recurs_tue">Tue</label>                                                                                      
+                                                                               <input type="checkbox" id="recurs_wed" name="recurs_wed" <?php if ($this->recurs_on['wed']) echo 'checked' ?>><label for="recurs_wed">Wed</label>
+                                                                               <input type="checkbox" id="recurs_thu" name="recurs_thu" <?php if ($this->recurs_on['thu']) echo 'checked' ?>><label for="recurs_thu">Thu</label>
+                                                                               <input type="checkbox" id="recurs_fri" name="recurs_fri" <?php if ($this->recurs_on['fri']) echo 'checked' ?>><label for="recurs_fri">Fri</label>
+                                                                               <input type="checkbox" id="recurs_sat" name="recurs_sat" <?php if ($this->recurs_on['sat']) echo 'checked' ?>><label for="recurs_sat">Sat</label></p>
             <p class="form"><label class="label" for="recurs_until">Recurs until:* </label><input type="date" class="text half" id="recurs_until" name="recurs_until"></p>
             </div><?php
          } 
@@ -276,7 +290,8 @@ class PHWReserveForm {
    * @return void
    * @since 1.0
    */
-   public function set_form_fields($res_id, $patron_name, $patron_email, $time_start, $time_end, $patron_purpose, $reserve_room, $auth_code) {
+   public function set_form_fields($res_id, $patron_name, $patron_email, $time_start, 
+                                   $time_end, $patron_purpose, $reserve_room, $auth_code) {
       $this->res_id = $res_id;
       $this->patron_name = $patron_name;
       $this->patron_email = $patron_email;
