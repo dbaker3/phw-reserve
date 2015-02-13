@@ -269,7 +269,7 @@ class PHWReserveForm {
          if (is_user_logged_in()) { ?>
             <p class="form"><label class="label" for="recurs">Recurring: </label><input type="checkbox" id="recurs" name="recurs" <?php if ($this->recurs) echo 'checked' ?>></p>
             <div id="recur-opts" class="recur-hidden">
-            <p class="form"><label class="label" for="">Recurs Every:* </label><input type="checkbox" id="recurs_sun" name="recurs_sun" <?php if ($this->recurs_on['sun']) echo 'checked' ?>><label for="recurs_sun">Sun</label>
+            <p class="form"><label class="label" for="recurs_every">Recurs Every:*</label><input type="checkbox" id="recurs_sun" name="recurs_sun" <?php if ($this->recurs_on['sun']) echo 'checked' ?>><label for="recurs_sun">Sun</label>
                                                                                <input type="checkbox" id="recurs_mon" name="recurs_mon" <?php if ($this->recurs_on['mon']) echo 'checked'?>><label for="recurs_mon">Mon</label>
                                                                                <input type="checkbox" id="recurs_tue" name="recurs_tue" <?php if ($this->recurs_on['tue']) echo 'checked' ?>><label for="recurs_tue">Tue</label>                                                                                      
                                                                                <input type="checkbox" id="recurs_wed" name="recurs_wed" <?php if ($this->recurs_on['wed']) echo 'checked' ?>><label for="recurs_wed">Wed</label>
