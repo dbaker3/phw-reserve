@@ -16,7 +16,6 @@
 * @since 1.0
 */
 class PHWReservePageController {
-   private $option_name = 'phwreserve_settings';
    private $rooms;
    private $valid_emails;
 
@@ -32,6 +31,7 @@ class PHWReservePageController {
    
    // PHWReserveReservationRequest
    private $email_res_id = false; 
+   private $email_transient = false;
    
    // PHWReserveForm
    private $email_auth = false;
@@ -43,6 +43,7 @@ class PHWReservePageController {
    private $cal_res_id = false;
    private $cal_auth = false;
    private $cal_submit_del = false;  // on logged in user clicking delete on res
+   private $cal_res_new = false;
    
    /**
    * Class constructor
@@ -68,7 +69,8 @@ class PHWReservePageController {
    * @since 1.0
    */
    private function load_plugin_settings() {
-      $settings = get_option($this->option_name);
+      $option_name = PHWReserveSettings::get_option_name();
+      $settings = get_option($option_name);
       $this->rooms = array_map('trim', explode("\n", $settings['rooms']));
       $this->valid_emails = array_map('trim', explode("\n", $settings['valid_emails']));
    }
@@ -91,8 +93,9 @@ class PHWReservePageController {
       if (isset($_GET['email_auth'])) $this->email_auth = $_GET['email_auth'];
       
       
-      // PHWReserveReservationRequest
+      // PHWReserveReservationRequest email_transient
       if (isset($_GET['email_res_id'])) $this->email_res_id = $_GET['email_res_id'];
+      if (isset($_GET['email_transient'])) $this->email_transient = $_GET['email_transient'];
       
       // PHWReserveCalendar
       if (isset($_GET['cal_view_cal'])) $this->cal_view_cal = $_GET['cal_view_cal'];
@@ -101,6 +104,7 @@ class PHWReservePageController {
       if (isset($_GET['cal_res_id'])) $this->cal_res_id = $_GET['cal_res_id'];
       if (isset($_GET['cal_auth'])) $this->cal_auth = $_GET['cal_auth'];
       if (isset($_GET['submit_del'])) $this->cal_submit_del = true;
+      if (isset($_GET['cal_res_new'])) $this->cal_res_new = true;
    }
    
    /**
@@ -117,7 +121,7 @@ class PHWReservePageController {
       }
       
       // Selected - Reserve a Room
-      elseif ($this->menu_new_res) {
+      elseif ($this->menu_new_res || $this->cal_res_new) {
          $this->handle_new_res_request();
       }
       
@@ -152,8 +156,22 @@ class PHWReservePageController {
       }
    }
    
+   
+   /**
+   * Handles clicking link to reserve a room
+   *
+   * Creates new form object and calls its display_form method.
+   * @since 1.0
+   */
+   private function handle_new_res_request() {
+      $form = new PHWReserveForm($this->rooms, $this->valid_emails);
+      $form->display_form();
+   }
+  
+  
    /**
    * Handles submission of new reservation form
+   *
    * Validates user inputs, verifies that requested time doesn't conflict with
    * an existing reservation. Displays form with errors if there are any. If OK
    * and WP user logged in, inserts reservation into table. If OK and not logged
@@ -188,17 +206,6 @@ class PHWReservePageController {
       else { // form validation error
          $form->display_form();  
       }
-   }
-   
-   
-   /**
-   * Handles clicking link to reserve a room
-   * Creates new form object and calls its display_form method.
-   * @since 1.0
-   */
-   private function handle_new_res_request() {
-      $form = new PHWReserveForm($this->rooms, $this->valid_emails);
-      $form->display_form();
    }
    
    
@@ -243,7 +250,7 @@ class PHWReservePageController {
    * 
    * @since 1.0
    */
-   function handle_cal_request() {
+   private function handle_cal_request() {
       if ($this->cal_room && $this->cal_month) 
          $submitted = true;
       else
@@ -269,7 +276,7 @@ class PHWReservePageController {
    * @todo Should I load these GET variables beforehand?
    */
    private function handle_auth_code_submission() {
-      $transient_name = $_GET['transient'];
+      $transient_name = $this->email_transient;
       $transient_data = get_transient($transient_name);
       $auth_code = $transient_data['auth_code'];
       if ($auth_code == $this->email_auth_code) {

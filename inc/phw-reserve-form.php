@@ -180,6 +180,26 @@ class PHWReserveForm {
    		$this->roomError = "You must select a room.";
    		$this->hasError = true;
    	}
+       
+      if ($this->recurs && (count($this->recurs_on) < 1)) {
+         $this->recurs_on_error = "Specify which day(s) of the week the reservation will recur on";
+         $this->hasError = true;
+      }
+
+      if ($this->recurs) {
+         if ($this->recurs_until === '') {
+            $this->recurs_until_error = "You must enter a date for recurring reservations to end.";
+            $this->hasError = true;
+         }
+         else if ($this->recurs_until_valid === false) {
+            $this->recurs_until_error = "You must enter a valid recurs until date (e.g. 11/4/2012).";
+            $this->hasError = true;
+         }
+         else if ($this->recurs_until_valid < $this->time_date_valid) {
+            $this->recurs_until_error = "The recurs until date must be later than the start date.";
+            $this->hasError = true;
+         }
+      }
    
      	if(!isset($this->hasError)) {
          return true;
@@ -222,6 +242,8 @@ class PHWReserveForm {
 				<?php if(isset($this->timeEndError)){echo $this->timeEndError . '<br />';}?>
 				<?php if(isset($this->purposeError)){echo $this->purposeError . '<br />';}?>
 				<?php if(isset($this->roomError)){echo $this->roomError . '<br />';}?>
+            <?php if(isset($this->recurs_on_error)) {echo $this->recurs_on_error . '<br />';}?>
+            <?php if(isset($this->recurs_until_error)) {echo $this->recurs_until_error . '<br />';}?>
 			</div>
 		<?php endif; ?>
          
@@ -254,7 +276,7 @@ class PHWReserveForm {
                                                                                <input type="checkbox" id="recurs_thu" name="recurs_thu" <?php if ($this->recurs_on['thu']) echo 'checked' ?>><label for="recurs_thu">Thu</label>
                                                                                <input type="checkbox" id="recurs_fri" name="recurs_fri" <?php if ($this->recurs_on['fri']) echo 'checked' ?>><label for="recurs_fri">Fri</label>
                                                                                <input type="checkbox" id="recurs_sat" name="recurs_sat" <?php if ($this->recurs_on['sat']) echo 'checked' ?>><label for="recurs_sat">Sat</label></p>
-            <p class="form"><label class="label" for="recurs_until">Recurs until:* </label><input type="date" class="text half" id="recurs_until" name="recurs_until"></p>
+            <p class="form"><label class="label" for="recurs_until">Recurs until:* </label><input type="date" class="text half <?php if(isset($this->recurs_until_error)){echo ' fail';}?>" id="recurs_until" name="recurs_until" value="<?php if($this->recurs_until_valid){echo date('n/j/Y', $this->recurs_until_valid);} ?>"></p>
             </div><?php
          } 
          if ($editing) {

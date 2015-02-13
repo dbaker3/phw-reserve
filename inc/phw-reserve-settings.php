@@ -200,4 +200,13 @@ class PHWReserveSettings {
    public function save_settings() {
       update_option(self::$option_name, self::$settings);
    }
+   
+   
+   /**
+   * Gets the name of the option in WordPress
+   * @since 1.0
+   */
+   public function get_option_name() {
+      return self::$option_name;
+   }
 }

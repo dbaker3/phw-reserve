@@ -202,7 +202,7 @@ class PHWReserveReservationRequest {
    * @todo DRY email methods
    */
    private function send_auth_code_email($transient_name) {
-      $conf_url = get_permalink() . '?transient=' . $transient_name . '&auth_code=' . $this->auth_code;
+      $conf_url = get_permalink() . '?email_transient=' . $transient_name . '&auth_code=' . $this->auth_code;
    	$emailTo = $this->patron_email;
 		$subject =  'Please confirm your room reservation request';
 		$body = '<h3>Please click the following link to confirm your room reservation request made ' . date("F j, Y, g:i a") .'</h3>';
