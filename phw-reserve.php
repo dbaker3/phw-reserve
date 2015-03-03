@@ -16,7 +16,6 @@ include 'inc/phw-reserve-menu.php';
 include 'inc/phw-reserve-calendar.php';
 include 'inc/phw-reserve-form.php';
 include 'inc/phw-reserve-reservation.php';
-include 'inc/phw-reserve-action.php';
 
 PHWReserveSettings::init();
 
@@ -35,9 +34,9 @@ add_shortcode('phw-reserve-page', 'phw_reserve_shortcode');
 * @since 1.0
 */
 function phwreserve_enqueue_files() {
-	wp_enqueue_style('phwreserve_css', plugin_dir_url(__FILE__) . 'css/phwreserve.css');
-   wp_enqueue_script('phwreserve_js', plugin_dir_url(__FILE__) . 'js/phwreserve.js');
-   wp_enqueue_script('timepicker_js', plugin_dir_url(__FILE__) . 'timepicker/jquery.timepicker.min.js');
-   wp_enqueue_style('timepicker_css', plugin_dir_url(__FILE__) . 'timepicker/jquery.timepicker.css');
+   wp_enqueue_style('phwreserve_css', plugins_url('css/phwreserve.css', __FILE__), array(), filemtime(dirname(__FILE__) . '/css/phwreserve.css'), 'all');
+   wp_enqueue_script('phwreserve_js', plugins_url('js/phwreserve.js', __FILE__), array('jquery'), filemtime(dirname(__FILE__) . '/js/phwreserve.js'), false);
+   wp_enqueue_script('timepicker_js', plugins_url('timepicker/jquery.timepicker.min.js', __FILE__), array('jquery'), filemtime(dirname(__FILE__) . '/timepicker/jquery.timepicker.min.js'), false);
+   wp_enqueue_style('timepicker_css', plugins_url('timepicker/jquery.timepicker.css', __FILE__), array(), filemtime(dirname(__FILE__) . '/timepicker/jquery.timepicker.css'), 'all');
 }
 add_action('wp_enqueue_scripts', 'phwreserve_enqueue_files');

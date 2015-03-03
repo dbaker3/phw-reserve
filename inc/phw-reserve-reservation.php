@@ -26,6 +26,9 @@ class PHWReserveReservationRequest {
    private $room;
    private $purpose;
    private $auth_code;
+   private $recurs;
+   private $recurs_until;
+   private $recurs_on = array();
    private $wpdb;
    
    
@@ -38,13 +41,18 @@ class PHWReserveReservationRequest {
    * @param string $end Unix timestamp of start date/time
    * @param string $room
    * @param string $purpose Reason requestor is reserving room
+   * @param string $auth_code should be empty string
+   * @param boolean $recurs
+   * @param string $recurs_until
+   * @param mixed array $recurs_on
    *
    * @since 1.0
    *
    * @return void
    */
    public function __construct($name = '', $email = '', $start = '', $end = '', 
-                               $room = '', $purpose = '', $auth_code='') {
+                               $room = '', $purpose = '', $auth_code = '', 
+                               $recurs = false, $recurs_until = '', $recurs_on = '') {
       $this->res_id = 0;
       $this->patron_name = $name;
       $this->patron_email = $email;
@@ -53,10 +61,14 @@ class PHWReserveReservationRequest {
       $this->room = $room;
       $this->purpose = $purpose;
       $this->auth_code = $auth_code;
+      $this->recurs = $recurs;
+      $this->recurs_until = $recurs_until;
+      $this->recurs_on = $recurs_on;
       
       global $wpdb;
       $this->wpdb =& $wpdb;
       $this->wpdb->phw_reservations = "{$this->wpdb->prefix}phw_reservations";
+      $this->wpdb->phw_reservations_recur = "{$this->wpdb->prefix}phw_reservations_recur";
    }
 
    
@@ -108,6 +120,7 @@ class PHWReserveReservationRequest {
    *
    * @todo check time conflict with Today's Hours widget if available
    * @todo should this be moved to the PHWReserveForm class?
+   * @todo should this be moved to a completely different class?!
    */
    public function check_time_conflict() {
       // confirmed reservations
@@ -136,6 +149,13 @@ class PHWReserveReservationRequest {
             }
          }
       }
+      // recurring reservations
+      if (!conflicting) {
+         $query = "SELECT res_id FROM {$this->wpdb->phw_reservations_recur}
+         
+                  ";
+      }
+
       return $conflicting;
    }
 
@@ -232,6 +252,7 @@ class PHWReserveReservationRequest {
    *
    * @since 1.0
    *
+   * @todo insert recurring instances into recur table
    */
    public function insert_into_db() {
       $query_get_res_id = "SELECT res_id FROM {$this->wpdb->phw_reservations} 
@@ -249,11 +270,25 @@ class PHWReserveReservationRequest {
                                 'datetime_end'   => $this->datetime_end,
                                 'purpose'        => $this->purpose,
                                 'room'           => $this->room,
-                                'auth_code'      => $this->auth_code
+                                'auth_code'      => $this->auth_code,
+                                'recurs'         => $this->recurs,
+                                'recurs_until'   => $this->recurs_until
                              ));
          if (!$success) {
             echo "There was an error inserting data into the database. Please contact " . antispambot(get_option('admin_email')) . " with this error.";
             wp_die();
+         }
+         // insert recurring reservations 
+         if ($this->recurs) {
+            $success = $this->wpdb->insert($this->wpdb->phw_reservations_recur,
+                                 array(
+
+
+                                 ));
+            if (!success) {
+               echo "There was an error inserting data into the database. Please contact " . antispambot(get_option('admin_email')) . " with this error.";
+               wp_die();
+            }
          }
          $res_id = $this->wpdb->get_results($query_get_res_id);
          $this->send_confirmed_email($res_id[0]->res_id);
@@ -367,6 +402,7 @@ class PHWReserveReservationRequest {
    * @since 1.0
    *
    * @todo replace $res_id parameter with $this->res_id  
+   * @todo delete all recurs for this reservation from the recur table
    */  
    public function del_res($res_id) {
       if ($this->wpdb->delete($this->wpdb->phw_reservations, array('res_id' => $res_id)))

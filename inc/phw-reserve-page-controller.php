@@ -35,6 +35,7 @@ class PHWReservePageController {
    
    // PHWReserveForm
    private $email_auth = false;
+   private $recurs = false;
 
    // PHWReserveCalendar
    private $cal_view_cal = false;
@@ -91,6 +92,7 @@ class PHWReservePageController {
       
       // PHWReserveForm
       if (isset($_GET['email_auth'])) $this->email_auth = $_GET['email_auth'];
+      if (isset($_POST['recurs'])) $this->recurs = true;
       
       
       // PHWReserveReservationRequest email_transient
@@ -180,14 +182,19 @@ class PHWReservePageController {
    * @since 1.0
    * @todo kinda smells...should time-check be moved to validate_inputs?
    * @todo DRY new res submission and edit res submission
+   *
+   * @todo add recurs to new reservations
    */
    private function handle_new_res_submission() { 
       $form = new PHWReserveForm($this->rooms, $this->valid_emails);
       if ($form->validate_inputs()) {
          $begin_time = strtotime(date('n/j/y', $form->time_date_valid) . ' ' . date('G:i e', $form->time_start_valid));
          $end_time= strtotime(date('n/j/y', $form->time_date_valid) . ' ' . date('G:i e', $form->time_end_valid));
-         $reservation = new PHWReserveReservationRequest($form->patron_name,
-                        $form->patron_email, $begin_time, $end_time, $form->reserve_room, $form->patron_purpose);
+         if ($form->recurs_until_valid)
+            $recurs_until = strtotime(date('n/j/y', $form->recurs_until_valid));
+         $reservation = new PHWReserveReservationRequest($form->patron_name, $form->patron_email, 
+                                 $begin_time, $end_time, $form->reserve_room, $form->patron_purpose,
+                                 '', $form->recurs, $recurs_until, $form->recurs_on);
          if ($reservation->check_time_conflict()) {
             $form->hasError = true;
             $form->timeStartError = "{$form->reserve_room} is already reserved during this time.";

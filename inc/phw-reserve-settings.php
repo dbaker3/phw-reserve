@@ -41,7 +41,7 @@ class PHWReserveSettings {
                   "Welshimer Room";
          self::$settings['valid_emails'] = $valid_emails;
          self::$settings['rooms'] = $rooms;
-         self::$save_settings();
+         self::save_settings();
       }
       if (is_admin()) {
          add_action('admin_menu', array(__CLASS__, 'register_phwreserve_settings_page'));
