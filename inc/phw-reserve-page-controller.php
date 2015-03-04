@@ -237,8 +237,12 @@ class PHWReservePageController {
                                    $res_data['datetime_end'],
                                    $res_data['purpose'], 
                                    $res_data['room'],
-                                   $res_data['auth_code']);
-            $form->display_form(true);
+                                   $res_data['auth_code'],
+                                   $res_data['recurs'],
+                                   $res_data['recurs_until'],
+                                   $res_data['recurs_on']);
+            $editing = true;
+            $form->display_form($editing);
          }
          else {
             echo "ERROR: Authorization code does not match requested reservation. Please contact " 

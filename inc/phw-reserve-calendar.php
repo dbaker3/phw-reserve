@@ -110,6 +110,8 @@ class PHWReserveCalendar {
                 FROM_UNIXTIME({$this->cal_month_timestamp}, '%c') = FROM_UNIXTIME(datetime_start, '%c')
                 ORDER BY datetime_start";
       return $wpdb->get_results($query, ARRAY_A);
+
+      // @todo add recurring reservations from recur table
    }
    
    

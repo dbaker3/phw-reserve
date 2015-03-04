@@ -28,7 +28,7 @@ class PHWReserveReservationRequest {
    private $auth_code;
    private $recurs;
    private $recurs_until;
-   private $recurs_on = array();
+   private $recurs_on;
    private $wpdb;
    
    
@@ -63,8 +63,8 @@ class PHWReserveReservationRequest {
       $this->auth_code = $auth_code;
       $this->recurs = $recurs;
       $this->recurs_until = $recurs_until;
-      $this->recurs_on = $recurs_on;
-      
+      $this->recurs_on = json_encode($recurs_on);
+  
       global $wpdb;
       $this->wpdb =& $wpdb;
       $this->wpdb->phw_reservations = "{$this->wpdb->prefix}phw_reservations";
@@ -88,6 +88,8 @@ class PHWReserveReservationRequest {
    * @param string $purpose
    * @param string $auth
    * @since 1.0
+   *
+   * @todo add code for recurring res
    */
    public function set_properties($res_id, $name, $email, $start, $end, $room, $purpose, $auth) {
       $this->res_id = $res_id;
@@ -272,7 +274,8 @@ class PHWReserveReservationRequest {
                                 'room'           => $this->room,
                                 'auth_code'      => $this->auth_code,
                                 'recurs'         => $this->recurs,
-                                'recurs_until'   => $this->recurs_until
+                                'recurs_until'   => $this->recurs_until,
+                                'recurs_on'      => $this->recurs_on
                              ));
          if (!$success) {
             echo "There was an error inserting data into the database. Please contact " . antispambot(get_option('admin_email')) . " with this error.";

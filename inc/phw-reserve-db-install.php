@@ -47,6 +47,7 @@ function phw_reserve_create_reservations_table() {
             auth_code varchar(20) NOT NULL default '',
             recurs boolean NOT NULL default 0,
             recurs_until bigint NOT NULL default 0,
+            recurs_on varchar(7) NOT NULL default '',
             PRIMARY KEY  (res_id)
             ) $charset_collate; ";
             
