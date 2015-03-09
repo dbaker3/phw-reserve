@@ -91,7 +91,8 @@ class PHWReserveReservationRequest {
    *
    * @todo add code for recurring res
    */
-   public function set_properties($res_id, $name, $email, $start, $end, $room, $purpose, $auth) {
+   public function set_properties($res_id, $name, $email, $start, $end, $room, $purpose, 
+                                  $auth, $recurs, $recurs_until, $recurs_on) {
       $this->res_id = $res_id;
       $this->patron_name = $name;
       $this->patron_email = $email;
@@ -100,6 +101,9 @@ class PHWReserveReservationRequest {
       $this->room = $room;
       $this->purpose = $purpose;
       $this->auth_code = $auth;
+      $this->recurs = $recurs;
+      $this->recurs_until = $recurs_until;
+      $this->recurs_on = $recurs_on;
    }
    
    
@@ -281,23 +285,59 @@ class PHWReserveReservationRequest {
             echo "There was an error inserting data into the database. Please contact " . antispambot(get_option('admin_email')) . " with this error.";
             wp_die();
          }
-         // insert recurring reservations 
+        
+         $res_id = $this->wpdb->get_results($query_get_res_id);
+         $res_id = $res_id[0]->res_id;
+        
+         // insert recurring reservations
          if ($this->recurs) {
-            $success = $this->wpdb->insert($this->wpdb->phw_reservations_recur,
-                                 array(
-
-
-                                 ));
-            if (!success) {
-               echo "There was an error inserting data into the database. Please contact " . antispambot(get_option('admin_email')) . " with this error.";
-               wp_die();
+            $recurring_dates = $this->get_recurring_dates(date('m/d/Y', $this->datetime_start),
+                                                   date('m/d/Y', $this->recurs_until),
+                                                   json_decode($this->recurs_on));
+            foreach ($recurring_dates as $recdate) {
+               $success = $this->wpdb->insert($this->wpdb->phw_reservations_recur,
+                                              array(
+                                                'res_id'     => $res_id,
+                                                'date_recur' => $recdate
+                                              ));
+               if (!success) {
+                  echo "There was an error inserting data into the database. Please contact " . antispambot(get_option('admin_email')) . " with this error.";
+                  wp_die();
+               }
             }
          }
-         $res_id = $this->wpdb->get_results($query_get_res_id);
-         $this->send_confirmed_email($res_id[0]->res_id);
+         $this->send_confirmed_email($res_id);
       }
    }
 
+
+   /**
+   * Returns an array of dates that a recurring reservation occurs on
+   *
+   * @param $start_date string "mm/dd/yyyy" or "m/d/yy"
+   * @param $end_date string see $start_date
+   * @param $recurs_on mixed array of days of week reservation recurs on
+   * @returns $recurring_dates mixed array of the dates the reservation recurs on
+   * @since 1.0
+   */
+   private function get_recurring_dates($start_date, $end_date, $recurs_on) {
+      $recurring_dates = array();
+   
+      $start = new DateTime($start_date);
+      $end = new DateTime($end_date);
+      $one_day = new DateInterval('P1D');
+      $period = new DatePeriod($start, $one_day, $end);
+
+      foreach ($period as $day) {
+         //$the_date = date('m/d/y', $day->getTimestamp());
+         $the_date = $day->getTimestamp();
+         $day_of_week = strtolower(date('D', $day->getTimestamp())); 
+   
+         if (array_key_exists($day_of_week, $recurs_on)) 
+            array_push($recurring_dates, $the_date);
+      }
+      return $recurring_dates;
+   }
 
    /**
    * Sends confirmation email to requestor
@@ -408,6 +448,14 @@ class PHWReserveReservationRequest {
    * @todo delete all recurs for this reservation from the recur table
    */  
    public function del_res($res_id) {
+      print_r($this->recurs);
+      if ($this->recurs) {
+         if ($this->wpdb->delete($this->wpdb->phw_reservations_recur, array('res_id' => $res_id)))
+            echo "Removed recurring events. ";
+         else
+            $this->no_id_match_error();
+      }
+
       if ($this->wpdb->delete($this->wpdb->phw_reservations, array('res_id' => $res_id)))
          echo "Reservation has been cancelled.";
       else

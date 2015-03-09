@@ -47,7 +47,7 @@ function phw_reserve_create_reservations_table() {
             auth_code varchar(20) NOT NULL default '',
             recurs boolean NOT NULL default 0,
             recurs_until bigint NOT NULL default 0,
-            recurs_on varchar(7) NOT NULL default '',
+            recurs_on varchar(100) NOT NULL default '',
             PRIMARY KEY  (res_id)
             ) $charset_collate; ";
             
@@ -84,8 +84,7 @@ function phw_reserve_create_recur_table() {
    $sql_create_table = "CREATE TABLE {$wpdb->phw_reservations_recur} (
             recur_id int(10) unsigned NOT NULL auto_increment,
             res_id int(10) unsigned NOT NULL default 0,
-            datetime_start bigint NOT NULL default 0,
-            datetime_end bigint NOT NULL default 0,
+            date_recur bigint NOT NULL default 0,
             PRIMARY KEY  (recur_id)
             ) $charset_collate; ";
             
