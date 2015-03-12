@@ -146,7 +146,8 @@ class PHWReservePageController {
       elseif ($this->sv_submit_edit) {
          $this->handle_edit_res_submission();
       }
-      
+     
+      // Logged in user requested to delete
       elseif ($this->cal_submit_del) {
          $this->handle_del_res_submission();
       }
@@ -313,7 +314,7 @@ class PHWReservePageController {
    * Handles edit/cancel form submission
    * 
    * Checks if user selected to cancel reservation or edit reservation. Quickly 
-   * deletes if desired. If editing, displays info in form, validates changes, 
+   * deletes if desired. If editing, validates changes, 
    * checks for time conflicts, and updates table if all is well.
    *
    * @since 1.0
@@ -324,7 +325,19 @@ class PHWReservePageController {
       $res_auth_code = $reservation->get_res_auth_code($res_id);
       if ($_POST['auth'] == $res_auth_code) {
          if (isset($_POST['del_res'])) {           // user wants it cancelled
-            $reservation->del_res($res_id);
+            $res_data = $reservation->get_res_data($res_id);
+            $reservation->set_properties($res_data['res_id'],
+                                         $res_data['patron_name'], 
+                                         $res_data['patron_email'],
+                                         $res_data['datetime_start'],
+                                         $res_data['datetime_end'],
+                                         $res_data['purpose'], 
+                                         $res_data['room'],
+                                         $res_data['auth_code'],
+                                         $res_data['recurs'],
+                                         $res_data['recurs_until'],
+                                         $res_data['recurs_on']);
+           $reservation->del_res($res_id);
          }
          else {   // user wants to edit res
             $form = new PHWReserveForm($this->rooms, $this->valid_emails);

@@ -127,6 +127,7 @@ class PHWReserveReservationRequest {
    * @todo check time conflict with Today's Hours widget if available
    * @todo should this be moved to the PHWReserveForm class?
    * @todo should this be moved to a completely different class?!
+   * @todo check recurring reservation table for conflicts +recur
    */
    public function check_time_conflict() {
       // confirmed reservations
@@ -258,7 +259,7 @@ class PHWReserveReservationRequest {
    *
    * @since 1.0
    *
-   * @todo insert recurring instances into recur table
+   * @todo insert recurring instances into recur table +recur
    */
    public function insert_into_db() {
       $query_get_res_id = "SELECT res_id FROM {$this->wpdb->phw_reservations} 
@@ -295,10 +296,13 @@ class PHWReserveReservationRequest {
                                                    date('m/d/Y', $this->recurs_until),
                                                    json_decode($this->recurs_on));
             foreach ($recurring_dates as $recdate) {
+               $r_datetime_start = strtotime(date("Ymd", $recdate) + "t" + date("His", $this->datetime_start));
+               $r_datetime_end =  strtotime(date("Ymd", $recdate) + "t" + date("His", $this->datetime_end));
                $success = $this->wpdb->insert($this->wpdb->phw_reservations_recur,
                                               array(
-                                                'res_id'     => $res_id,
-                                                'date_recur' => $recdate
+                                                'res_id'           => $res_id,
+                                                'r_datetime_start' => $r_datetime_start,
+                                                'r_datetime_end'   => $r_datetime_end
                                               ));
                if (!success) {
                   echo "There was an error inserting data into the database. Please contact " . antispambot(get_option('admin_email')) . " with this error.";
@@ -350,6 +354,7 @@ class PHWReserveReservationRequest {
    * @return void
    *
    * @todo option for reply address
+   * @todo mention any +recur if any
    */
    private function send_confirmed_email($res_id) {
       $conf_url = get_permalink() . '?email_res_id=' . $res_id . '&email_auth=' . $this->auth_code;
@@ -445,13 +450,12 @@ class PHWReserveReservationRequest {
    * @since 1.0
    *
    * @todo replace $res_id parameter with $this->res_id  
-   * @todo delete all recurs for this reservation from the recur table
+   * @todo delete all recurs for this reservation from the recur table +recur
    */  
    public function del_res($res_id) {
-      print_r($this->recurs);
       if ($this->recurs) {
          if ($this->wpdb->delete($this->wpdb->phw_reservations_recur, array('res_id' => $res_id)))
-            echo "Removed recurring events. ";
+            echo "OK. ";
          else
             $this->no_id_match_error();
       }
@@ -466,6 +470,8 @@ class PHWReserveReservationRequest {
    /**
    * Updates existing reservation in database 
    * @since 1.0
+   *
+   * @todo +recur if recurs, remove them and re-add them
    */
    public function update_into_db() {
       $result = $this->wpdb->update($this->wpdb->phw_reservations,

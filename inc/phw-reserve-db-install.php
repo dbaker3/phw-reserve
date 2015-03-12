@@ -84,7 +84,8 @@ function phw_reserve_create_recur_table() {
    $sql_create_table = "CREATE TABLE {$wpdb->phw_reservations_recur} (
             recur_id int(10) unsigned NOT NULL auto_increment,
             res_id int(10) unsigned NOT NULL default 0,
-            date_recur bigint NOT NULL default 0,
+            r_datetime_start bigint NOT NULL default 0,
+            r_datetime_end bigint NOT NULL default 0,
             PRIMARY KEY  (recur_id)
             ) $charset_collate; ";
             
