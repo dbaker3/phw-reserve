@@ -296,8 +296,8 @@ class PHWReserveReservationRequest {
                                                    date('m/d/Y', $this->recurs_until),
                                                    json_decode($this->recurs_on));
             foreach ($recurring_dates as $recdate) {
-               $r_datetime_start = strtotime(date("Ymd", $recdate) + "t" + date("His", $this->datetime_start));
-               $r_datetime_end =  strtotime(date("Ymd", $recdate) + "t" + date("His", $this->datetime_end));
+               $r_datetime_start = strtotime(date("Ymd", $recdate) . 't' . date("His", $this->datetime_start));
+               $r_datetime_end =  strtotime(date("Ymd", $recdate) . 't' . date("His", $this->datetime_end));
                $success = $this->wpdb->insert($this->wpdb->phw_reservations_recur,
                                               array(
                                                 'res_id'           => $res_id,
@@ -329,8 +329,9 @@ class PHWReserveReservationRequest {
    
       $start = new DateTime($start_date);
       $end = new DateTime($end_date);
+      $end->modify('+1 day');
       $one_day = new DateInterval('P1D');
-      $period = new DatePeriod($start, $one_day, $end);
+      $period = new DatePeriod($start, $one_day, $end, DatePeriod::EXCLUDE_START_DATE);
 
       foreach ($period as $day) {
          //$the_date = date('m/d/y', $day->getTimestamp());
