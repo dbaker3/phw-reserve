@@ -429,7 +429,7 @@ class PHWReserveReservationRequest {
    * @return string $auth_code A reservation's authorization code
    * @since 1.0
    *
-   * @todo replace $res_id parameter with $this->res_id  
+   * @todo? replace $res_id parameter with $this->res_id  
    */
    public function get_res_auth_code($res_id) {
       $query = "SELECT auth_code FROM {$this->wpdb->phw_reservations} WHERE res_id = '{$res_id}'";
@@ -448,7 +448,7 @@ class PHWReserveReservationRequest {
    * @return void
    * @since 1.0
    *
-   * @todo replace $res_id parameter with $this->res_id  
+   * @todo? replace $res_id parameter with $this->res_id  
    */  
    public function del_res($res_id) {
       if ($this->recurs) {
@@ -464,7 +464,21 @@ class PHWReserveReservationRequest {
          $this->no_id_match_error();
    }
 
-   
+
+   /**
+   * Deletes single instance in recurring reservation
+   *
+   * @param int $recur_id Recurrence ID
+   * @since 1.0
+   */
+   public function del_recur($recur_id) {
+      if ($this->wpdb->delete($this->wpdb->phw_reservations_recur, array('recur_id' => $recur_id)))
+         echo "Instance has been cancelled.";
+      else
+         $this->no_id_match_error();
+   }
+
+
    /**
    * Updates existing reservation in database 
    * @since 1.0

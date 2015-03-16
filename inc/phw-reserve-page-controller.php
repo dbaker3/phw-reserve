@@ -42,8 +42,10 @@ class PHWReservePageController {
    private $cal_room = false;
    private $cal_month = false;
    private $cal_res_id = false;
+   private $cal_recur_id = false;
    private $cal_auth = false;
    private $cal_submit_del = false;  // on logged in user clicking delete on res
+   private $cal_submit_del_occur = false; // on logged in user clicking delete single instance in series
    private $cal_res_new = false;
    
    /**
@@ -104,8 +106,10 @@ class PHWReservePageController {
       if (isset($_GET['cal_room'])) $this->cal_room = $_GET['cal_room'];
       if (isset($_GET['cal_month'])) $this->cal_month = $_GET['cal_month'];
       if (isset($_GET['cal_res_id'])) $this->cal_res_id = $_GET['cal_res_id'];
+      if (isset($_GET['cal_recur_id'])) $this->cal_recur_id = $_GET['cal_recur_id'];
       if (isset($_GET['cal_auth'])) $this->cal_auth = $_GET['cal_auth'];
       if (isset($_GET['submit_del'])) $this->cal_submit_del = true;
+      if (isset($_GET['submit_del_occur'])) $this->cal_submit_del_occur = true;
       if (isset($_GET['cal_res_new'])) $this->cal_res_new = true;
    }
    
@@ -150,6 +154,11 @@ class PHWReservePageController {
       // Logged in user requested to delete
       elseif ($this->cal_submit_del) {
          $this->handle_del_res_submission();
+      }
+
+      // Logged in user requested to delete single recur instance
+      elseif ($this->cal_submit_del_occur) {
+         $this->handle_del_occur_submission();
       }
       
       // Initial Page Load
@@ -398,5 +407,34 @@ class PHWReservePageController {
          echo 'You are not logged in.';
       }
    }
+
+
+   /**
+   * Handles logged in user's request to delete single occurence in series
+   *
+   * Deletes only a single instance of a recurring reservation. Only logged in
+   * users can delete
+   *
+   * @since 1.0
+   */
+   private function handle_del_occur_submission() {
+      $res_id = $this->cal_res_id;
+      $recur_id = $this->cal_recur_id;  
+       if (is_user_logged_in()) {
+         $reservation = new PHWReserveReservationRequest();
+         $res_auth_code = $reservation->get_res_auth_code($res_id);
+         if ($this->cal_auth == $res_auth_code) {
+            $reservation->del_recur($recur_id);
+         }
+         else {
+            echo "ERROR: Authorization code does not match requested reservation. Please contact " 
+                 . antispambot(get_option('admin_email')) . " with this error.";
+            wp_die();                
+         }
+      }
+      else {
+         echo 'You are not logged in.';
+      }
+  }
    
 }

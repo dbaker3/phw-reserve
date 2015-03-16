@@ -184,7 +184,12 @@ class PHWReserveCalendar {
             if ($res_date == $cur_date) {
                echo "<li class='res-info'>";
                if (is_user_logged_in()) {
-                  echo " <a href='?cal_res_id={$res['res_id']}&amp;submit_del=true&amp;cal_auth={$res['auth_code']}' onclick='return confirm(\"Are you sure you want to delete this reservation?\")'  class='res-del'>delete</a> ";
+                  if (array_key_exists('recur_id', $res)) {
+                     echo " <a href='?cal_res_id={$res['res_id']}&amp;submit_del=true&amp;cal_auth={$res['auth_code']}' onclick='return confirm(\"Are you sure you want to delete this ENTIRE SERIES of recurring reservations?\")'  class='res-del'>delete series</a> ";
+                     echo " <a href='?cal_recur_id={$res['recur_id']}&amp;cal_res_id={$res['res_id']}&amp;submit_del_occur=true&amp;cal_auth={$res['auth_code']}' onclick='return confirm(\"Are you sure you want to delete this SINGLE INSTANCE from the series of recurring reservations?\")'  class='res-del'>delete instance</a> ";
+                  } 
+                  else
+                     echo " <a href='?cal_res_id={$res['res_id']}&amp;submit_del=true&amp;cal_auth={$res['auth_code']}' onclick='return confirm(\"Are you sure you want to delete this reservation?\")'  class='res-del'>delete</a> ";
                }
                echo "Reserved " . date('g:i a', $res['datetime_start']) . " - " . date('g:i a', $res['datetime_end']);
                if (is_user_logged_in()) {
