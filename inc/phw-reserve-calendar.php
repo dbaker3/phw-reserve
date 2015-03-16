@@ -92,11 +92,15 @@ class PHWReserveCalendar {
    
    
    /**
-   * Gets reservation data from table 
+   * Gets reservation data from tables
+   *
+   * Selects reservations and recurring reservations from their respective
+   * tables then combines into one array, sorts it by starting datetime,
+   * and returns the array
+   *
    * @return mixed $results Reservation data for selected room and month
    * @since 1.0
    *
-   * @todo add +recur
    */
    private function query_db() {
       $this->cal_month_timestamp = strtotime($this->cal_month);
@@ -111,12 +115,51 @@ class PHWReserveCalendar {
                 '{$this->cal_room}' = room AND
                 FROM_UNIXTIME({$this->cal_month_timestamp}, '%c') = FROM_UNIXTIME(datetime_start, '%c')
                 ORDER BY datetime_start";
-      return $wpdb->get_results($query, ARRAY_A);
+      
+      $result_res = $wpdb->get_results($query, ARRAY_A);
 
-      // @todo add recurring reservations from recur table
+      // Recurring reservations from recur table
+      $wpdb->phw_reservations_recur = "{$wpdb->prefix}phw_reservations_recur";
+      $query = "SELECT {$wpdb->phw_reservations_recur}.res_id, 
+                       {$wpdb->phw_reservations_recur}.recur_id,
+                       {$wpdb->phw_reservations_recur}.r_datetime_start as datetime_start, 
+                       {$wpdb->phw_reservations_recur}.r_datetime_end as datetime_end,
+                       patron_name, patron_email, purpose, auth_code
+                FROM {$wpdb->phw_reservations_recur}, {$wpdb->phw_reservations}
+                WHERE 
+                {$wpdb->phw_reservations_recur}.res_id = {$wpdb->phw_reservations}.res_id AND
+                '{$this->cal_room}' = {$wpdb->phw_reservations}.room AND
+                FROM_UNIXTIME({$this->cal_month_timestamp}, '%c') = FROM_UNIXTIME({$wpdb->phw_reservations_recur}.r_datetime_start, '%c')
+                ORDER BY {$wpdb->phw_reservations_recur}.r_datetime_start";
+
+      $result_rec = $wpdb->get_results($query, ARRAY_A);
+      $merged = array_merge($result_res, $result_rec);
+      
+      if (!empty($merged))
+         $merged = $this->subval_sort($merged, 'datetime_start');
+
+      return $merged;
    }
-   
-   
+ 
+
+   /**
+   * Sorts multidimensional array by key
+   *
+   * Used by $this->query_db() to sort combined array of normal reservations
+   * and recurring reservations. Gleaned from Adam S of firsttube.com
+   */
+   private function subval_sort($a,$subkey) {
+      foreach($a as $k=>$v) {
+         $b[$k] = strtolower($v[$subkey]);
+      }
+      asort($b);
+      foreach($b as $key=>$val) {
+         $c[] = $a[$key];
+      }
+      return $c;
+   }
+
+
    /**
    * Displays reservation calendar
    *

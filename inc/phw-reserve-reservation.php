@@ -258,8 +258,6 @@ class PHWReserveReservationRequest {
    * send_confirmed_email() method 
    *
    * @since 1.0
-   *
-   * @todo insert recurring instances into recur table +recur
    */
    public function insert_into_db() {
       $query_get_res_id = "SELECT res_id FROM {$this->wpdb->phw_reservations} 
@@ -451,7 +449,6 @@ class PHWReserveReservationRequest {
    * @since 1.0
    *
    * @todo replace $res_id parameter with $this->res_id  
-   * @todo delete all recurs for this reservation from the recur table +recur
    */  
    public function del_res($res_id) {
       if ($this->recurs) {
