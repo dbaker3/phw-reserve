@@ -157,10 +157,16 @@ class PHWReserveReservationRequest {
          }
       }
       // recurring reservations
-      if (!conflicting) {
-         $query = "SELECT res_id FROM {$this->wpdb->phw_reservations_recur}
-         
-                  ";
+      if (!$conflicting) {
+         $query = "SELECT {$this->wpdb->phw_reservations_recur}.res_id 
+                   FROM {$this->wpdb->phw_reservations_recur},
+                        {$this->wpdb->phw_reservations}
+                   WHERE '{$this->room}' = room
+                   AND {$this->datetime_start} < r_datetime_end
+                   AND {$this->datetime_end} > r_datetime_start
+                   AND {$this->res_id} <> {$this->wpdb->phw_reservations}.res_id";
+         $conflicting = $this->wpdb->query($query);
+         print_r($conflicting);
       }
 
       return $conflicting;

@@ -165,8 +165,6 @@ class PHWReserveCalendar {
    *
    * @param mixed $results Reservation data for selected room and month
    * @since 1.0
-   * @todo allow logged in use to delete reservations
-   * @todo +recur
    */
    private function print_reservations($results) {
       echo "<h4>Existing reservations for {$this->cal_room} during " . date('F Y', $this->cal_month_timestamp) . "</h4>";
