@@ -156,15 +156,21 @@ class PHWReserveReservationRequest {
             }
          }
       }
-      // recurring reservations
+      // recurring reservations           +recur FIX THIS
       if (!$conflicting) {
-         $query = "SELECT {$this->wpdb->phw_reservations_recur}.res_id 
-                   FROM {$this->wpdb->phw_reservations_recur},
-                        {$this->wpdb->phw_reservations}
+         $query = "SELECT recur_id 
+                   FROM (SELECT {$this->wpdb->phw_reservations_recur}.recur_id,
+                                {$this->wpdb->phw_reservations_recur}.r_datetime_start,
+                                {$this->wpdb->phw_reservations_recur}.r_datetime_end,
+                                {$this->wpdb->phw_reservations}.room
+                         FROM {$this->wpdb->phw_reservations},
+                              {$this->wpdb->phw_reservations_recur}
+                         WHERE {$this->wpdb->phw_reservations}.res_id =
+                               {$this->wpdb->phw_reservations_recur}.res_id
+                        ) AS recurring_reservations_set
                    WHERE '{$this->room}' = room
                    AND {$this->datetime_start} < r_datetime_end
-                   AND {$this->datetime_end} > r_datetime_start
-                   AND {$this->res_id} <> {$this->wpdb->phw_reservations}.res_id";
+                   AND {$this->datetime_end} > r_datetime_start";
          $conflicting = $this->wpdb->query($query);
          print_r($conflicting);
       }
@@ -296,25 +302,35 @@ class PHWReserveReservationRequest {
         
          // insert recurring reservations
          if ($this->recurs) {
-            $recurring_dates = $this->get_recurring_dates(date('m/d/Y', $this->datetime_start),
-                                                   date('m/d/Y', $this->recurs_until),
-                                                   json_decode($this->recurs_on));
-            foreach ($recurring_dates as $recdate) {
-               $r_datetime_start = strtotime(date("Ymd", $recdate) . 't' . date("His", $this->datetime_start));
-               $r_datetime_end =  strtotime(date("Ymd", $recdate) . 't' . date("His", $this->datetime_end));
-               $success = $this->wpdb->insert($this->wpdb->phw_reservations_recur,
-                                              array(
-                                                'res_id'           => $res_id,
-                                                'r_datetime_start' => $r_datetime_start,
-                                                'r_datetime_end'   => $r_datetime_end
-                                              ));
-               if (!success) {
-                  echo "There was an error inserting data into the database. Please contact " . antispambot(get_option('admin_email')) . " with this error.";
-                  wp_die();
-               }
-            }
+            $this->insert_recurring_into_db($res_id); 
          }
+        
          $this->send_confirmed_email($res_id);
+      }
+   }
+
+   
+   /**
+   * Inserts recurring reservations into table
+   * @since 1.0
+   */
+   private function insert_recurring_into_db($res_id) {
+      $recurring_dates = $this->get_recurring_dates(date('m/d/Y', $this->datetime_start),
+                                             date('m/d/Y', $this->recurs_until),
+                                             json_decode($this->recurs_on));
+      foreach ($recurring_dates as $recdate) {
+         $r_datetime_start = strtotime(date("Ymd", $recdate) . 't' . date("His", $this->datetime_start));
+         $r_datetime_end =  strtotime(date("Ymd", $recdate) . 't' . date("His", $this->datetime_end));
+         $success = $this->wpdb->insert($this->wpdb->phw_reservations_recur,
+                                        array(
+                                          'res_id'           => $res_id,
+                                          'r_datetime_start' => $r_datetime_start,
+                                          'r_datetime_end'   => $r_datetime_end
+                                        ));
+         if (!success) {
+            echo "There was an error inserting data into the database. Please contact " . antispambot(get_option('admin_email')) . " with this error.";
+            wp_die();
+         }
       }
    }
 
@@ -359,6 +375,7 @@ class PHWReserveReservationRequest {
    * @return void
    *
    * @todo option for reply address
+   * @todo option for message text
    * @todo mention any +recur if any
    */
    private function send_confirmed_email($res_id) {
@@ -490,6 +507,7 @@ class PHWReserveReservationRequest {
    * @since 1.0
    *
    * @todo +recur if recurs, remove them and re-add them
+   * @todo +recur update main table with recur info
    */
    public function update_into_db() {
       $result = $this->wpdb->update($this->wpdb->phw_reservations,
@@ -512,6 +530,13 @@ class PHWReserveReservationRequest {
       else {
          echo "ERROR: Could not update reservation details. Please contact "
               . antispambot(get_option('admin_email')) . " with this error.";
+      }
+
+      if ($this->recurs) {
+         // remove recurring reservations
+
+         // insert recurring reservations
+         $this->insert_recurring_into_db();
       }
    }
    

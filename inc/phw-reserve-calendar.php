@@ -105,7 +105,7 @@ class PHWReserveCalendar {
    private function query_db() {
       $this->cal_month_timestamp = strtotime($this->cal_month);
       if (date('n') > date('n', $this->cal_month_timestamp)) {
-         $this->cal_month_timestamp = strtotime(date('M', $this->cal_month_timestamp));
+         $this->cal_month_timestamp = strtotime(date('M', $this->cal_month_timestamp) . " +1 year");
       }
       global $wpdb;
       $wpdb->phw_reservations = "{$wpdb->prefix}phw_reservations";
