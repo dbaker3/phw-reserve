@@ -353,10 +353,11 @@ class PHWReservePageController {
             if ($form->validate_inputs()) {
                $begin_time = strtotime(date('n/j/y', $form->time_date_valid) . ' ' . date('G:i e', $form->time_start_valid));
                $end_time= strtotime(date('n/j/y', $form->time_date_valid) . ' ' . date('G:i e', $form->time_end_valid));
+               $recurs_until = strtotime(date('n/j/y', $form->recurs_until_valid));
                $reservation->set_properties($res_id, $form->patron_name, $form->patron_email, 
                                             $begin_time, $end_time, $form->reserve_room,
                                             $form->patron_purpose, $res_auth_code, $form->recurs,
-                                            $form->recurs_until, $form->recurs_on);
+                                            $recurs_until, $form->recurs_on);
                if ($reservation->check_time_conflict($res_id)) {
                   $form->hasError = true;
                   $form->timeStartError = "{$form->reserve_room} is already reserved during this time.";

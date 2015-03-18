@@ -103,7 +103,7 @@ class PHWReserveReservationRequest {
       $this->auth_code = $auth;
       $this->recurs = $recurs;
       $this->recurs_until = $recurs_until;
-      $this->recurs_on = $recurs_on;
+      $this->recurs_on = json_encode($recurs_on);
    }
    
    
@@ -127,7 +127,6 @@ class PHWReserveReservationRequest {
    * @todo check time conflict with Today's Hours widget if available
    * @todo should this be moved to the PHWReserveForm class?
    * @todo should this be moved to a completely different class?!
-   * @todo check recurring reservation table for conflicts +recur
    */
    public function check_time_conflict() {
       // confirmed reservations
@@ -156,7 +155,7 @@ class PHWReserveReservationRequest {
             }
          }
       }
-      // recurring reservations           +recur FIX THIS
+      // recurring reservations
       if (!$conflicting) {
          $query = "SELECT recur_id 
                    FROM (SELECT {$this->wpdb->phw_reservations_recur}.recur_id,
@@ -172,7 +171,6 @@ class PHWReserveReservationRequest {
                    AND {$this->datetime_start} < r_datetime_end
                    AND {$this->datetime_end} > r_datetime_start";
          $conflicting = $this->wpdb->query($query);
-         print_r($conflicting);
       }
 
       return $conflicting;
@@ -507,16 +505,18 @@ class PHWReserveReservationRequest {
    * @since 1.0
    *
    * @todo +recur if recurs, remove them and re-add them
-   * @todo +recur update main table with recur info
    */
    public function update_into_db() {
       $result = $this->wpdb->update($this->wpdb->phw_reservations,
                               array( 'datetime_start' => $this->datetime_start,
                                      'datetime_end'   => $this->datetime_end,
                                      'purpose'        => $this->purpose,
-                                     'room'           => $this->room),
+                                     'room'           => $this->room,
+                                     'recurs'         => $this->recurs,
+                                     'recurs_until'   => $this->recurs_until,
+                                     'recurs_on'      => $this->recurs_on),
                               array( 'res_id'         => $this->res_id),
-                              array('%d', '%d', '%s', '%s'),
+                              array('%d', '%d', '%s', '%s', '%d', '%d', '%s'),
                               array('%d')
                               );
                               
@@ -524,9 +524,9 @@ class PHWReserveReservationRequest {
          echo "Your reservation has been updated.";
          $this->send_confirmed_email($this->res_id);
       }
-      elseif ($result === 0) {
+      /*elseif ($result === 0) {
          echo "You did not make any changes to your reservation.";
-      }
+      }*/
       else {
          echo "ERROR: Could not update reservation details. Please contact "
               . antispambot(get_option('admin_email')) . " with this error.";
@@ -536,7 +536,7 @@ class PHWReserveReservationRequest {
          // remove recurring reservations
 
          // insert recurring reservations
-         $this->insert_recurring_into_db();
+         $this->insert_recurring_into_db($this->res_id);
       }
    }
    
