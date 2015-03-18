@@ -465,6 +465,9 @@ class PHWReserveReservationRequest {
    /**
    * Deletes a reservation from the table
    *
+   * Removes reservation from main table as well as any existing
+   * recurring instances in recur table
+   *
    * @param int $res_id Reservation ID 
    * @return void
    * @since 1.0
@@ -473,14 +476,25 @@ class PHWReserveReservationRequest {
    */  
    public function del_res($res_id) {
       if ($this->recurs) {
-         if ($this->wpdb->delete($this->wpdb->phw_reservations_recur, array('res_id' => $res_id)))
-            echo "OK. ";
-         else
-            $this->no_id_match_error();
+         $this->del_all_recur($res_id);
       }
 
       if ($this->wpdb->delete($this->wpdb->phw_reservations, array('res_id' => $res_id)))
          echo "Reservation has been cancelled.";
+      else
+         $this->no_id_match_error();
+   }
+
+
+   /**
+   * Deletes all occurences of recurring from recur table
+   *
+   * @param int $res_id Reservation ID
+   * @since 1.0
+   */
+   private function del_all_recur($res_id) {
+      if ($this->wpdb->delete($this->wpdb->phw_reservations_recur, array('res_id' => $res_id)))
+         echo "OK. ";
       else
          $this->no_id_match_error();
    }
@@ -504,7 +518,7 @@ class PHWReserveReservationRequest {
    * Updates existing reservation in database 
    * @since 1.0
    *
-   * @todo +recur if recurs, remove them and re-add them
+   * @todo +recur if recurs, remove them and re-add them ???WORKING???
    */
    public function update_into_db() {
       $result = $this->wpdb->update($this->wpdb->phw_reservations,
@@ -519,23 +533,18 @@ class PHWReserveReservationRequest {
                               array('%d', '%d', '%s', '%s', '%d', '%d', '%s'),
                               array('%d')
                               );
-                              
       if ($result) {
          echo "Your reservation has been updated.";
          $this->send_confirmed_email($this->res_id);
       }
-      /*elseif ($result === 0) {
-         echo "You did not make any changes to your reservation.";
-      }*/
       else {
          echo "ERROR: Could not update reservation details. Please contact "
               . antispambot(get_option('admin_email')) . " with this error.";
       }
 
       if ($this->recurs) {
-         // remove recurring reservations
-
-         // insert recurring reservations
+         // remove & re-add
+         $this->del_all_recur($this->res_id);
          $this->insert_recurring_into_db($this->res_id);
       }
    }

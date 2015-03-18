@@ -389,6 +389,7 @@ class PHWReservePageController {
    * the reservation.
    *
    * @since 1.0
+   * @todo +recur $reservation->recurs needs set true if recurs to remove from recur table
    */
    private function handle_del_res_submission() {
       $res_id = $this->cal_res_id;
