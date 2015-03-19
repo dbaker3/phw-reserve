@@ -128,11 +128,16 @@ class PHWReserveReservationRequest {
    * @todo should this be moved to the PHWReserveForm class?
    * @todo should this be moved to a completely different class?!
    */
-   public function check_time_conflict() {
+   public function check_time_conflict($start = null, $end = null) {
+      if ($start === null || $end === null) {
+         $start = $this->datetime_start;
+         $end = $this->datetime_end;
+      }
+
       // confirmed reservations
       $query = "SELECT res_id FROM {$this->wpdb->phw_reservations}
-                WHERE {$this->datetime_start} < datetime_end
-                AND {$this->datetime_end} > datetime_start
+                WHERE {$start} < datetime_end
+                AND {$end} > datetime_start
                 AND '{$this->room}' = room
                 AND {$this->res_id} <> res_id";
       $conflicting = $this->wpdb->query($query);
@@ -147,8 +152,8 @@ class PHWReserveReservationRequest {
             $option_name = $result['option_name'];
             $transient_name = str_replace('_transient_', '', $option_name);
             $transient_data = get_transient($transient_name);
-            if ($this->datetime_start < $transient_data['datetime_end'] &&
-                     $this->datetime_end > $transient_data['datetime_start'] &&
+            if ($start < $transient_data['datetime_end'] &&
+                     $end > $transient_data['datetime_start'] &&
                      $this->room == $transient_data['room']) {
                $conflicting = true;
                break;
@@ -168,8 +173,8 @@ class PHWReserveReservationRequest {
                                {$this->wpdb->phw_reservations_recur}.res_id
                         ) AS recurring_reservations_set
                    WHERE '{$this->room}' = room
-                   AND {$this->datetime_start} < r_datetime_end
-                   AND {$this->datetime_end} > r_datetime_start";
+                   AND {$start} < r_datetime_end
+                   AND {$end} > r_datetime_start";
          $conflicting = $this->wpdb->query($query);
       }
 
@@ -311,6 +316,8 @@ class PHWReserveReservationRequest {
    /**
    * Inserts recurring reservations into table
    * @since 1.0
+   *
+   * @todo +recur Add check for time conflict for each recur before adding to db
    */
    private function insert_recurring_into_db($res_id) {
       $recurring_dates = $this->get_recurring_dates(date('m/d/Y', $this->datetime_start),
@@ -319,6 +326,14 @@ class PHWReserveReservationRequest {
       foreach ($recurring_dates as $recdate) {
          $r_datetime_start = strtotime(date("Ymd", $recdate) . 't' . date("His", $this->datetime_start));
          $r_datetime_end =  strtotime(date("Ymd", $recdate) . 't' . date("His", $this->datetime_end));
+
+         if ($this->check_time_conflict($r_datetime_start, $r_datetime_end)) {
+            // @todo print message that there was a conflict with this time
+            continue; // skip this recur instance
+            // or should we cancel the reservation and remove any that have been inserted?
+            // or should we check this before we begin adding?!
+         };
+
          $success = $this->wpdb->insert($this->wpdb->phw_reservations_recur,
                                         array(
                                           'res_id'           => $res_id,

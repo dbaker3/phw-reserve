@@ -174,7 +174,7 @@ class PHWReserveCalendar {
             continue;   // don't print dates before today
          }
          $the_date = strtotime(date('F', $this->cal_month_timestamp) . " " . $i . " " . date('Y', $this->cal_month_timestamp));
-         echo "<div class='day-head'>" . date('F', $this->cal_month_timestamp) . " {$i}<span class='make-res'><a href='?cal_res_new=true&time_date={$the_date}'>make reservation</a></span></div>";
+         echo "<div class='day-head'>" . date('F', $this->cal_month_timestamp) . " {$i} - " . date('l', $the_date) . "<span class='make-res'><a href='?cal_res_new=true&time_date={$the_date}'>make reservation</a></span></div>";
          echo "<ul>";
          foreach ($results as $res) {
             $res_date = date('MjY', $res['datetime_start']);

@@ -397,6 +397,18 @@ class PHWReservePageController {
          $reservation = new PHWReserveReservationRequest();
          $res_auth_code = $reservation->get_res_auth_code($res_id);
          if ($this->cal_auth == $res_auth_code) {
+            $res_data = $reservation->get_res_data($res_id);
+            $reservation->set_properties($res_data['res_id'],
+                                         $res_data['patron_name'], 
+                                         $res_data['patron_email'],
+                                         $res_data['datetime_start'],
+                                         $res_data['datetime_end'],
+                                         $res_data['purpose'], 
+                                         $res_data['room'],
+                                         $res_data['auth_code'],
+                                         $res_data['recurs'],
+                                         $res_data['recurs_until'],
+                                         $res_data['recurs_on']);
             $reservation->del_res($res_id);
          }
          else {
