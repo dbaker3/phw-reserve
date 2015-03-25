@@ -134,14 +134,15 @@ class PHWReserveReservationRequest {
          $end = $this->datetime_end;
       }
 
-      // confirmed reservations
+      // against confirmed reservations
       $query = "SELECT res_id FROM {$this->wpdb->phw_reservations}
                 WHERE {$start} < datetime_end
                 AND {$end} > datetime_start
                 AND '{$this->room}' = room
                 AND {$this->res_id} <> res_id";
       $conflicting = $this->wpdb->query($query);
-      // unconfirmed reservations
+      
+      // against unconfirmed reservations (transients)
       if (!$conflicting) {
          $this->delete_expired_transients();
          $query = "SELECT option_name
@@ -160,7 +161,7 @@ class PHWReserveReservationRequest {
             }
          }
       }
-      // recurring reservations
+      // against recurring reservations
       if (!$conflicting) {
          $query = "SELECT recur_id 
                    FROM (SELECT {$this->wpdb->phw_reservations_recur}.recur_id,
@@ -181,7 +182,31 @@ class PHWReserveReservationRequest {
       return $conflicting;
    }
 
-   
+
+   /**
+   * Checks each recur instance for time conflict
+   *
+   *
+   */
+   public function check_recur_time_conflict() {
+      $recurring_dates = $this->get_recurring_dates(date('m/d/Y', $this->datetime_start),
+                                             date('m/d/Y', $this->recurs_until),
+                                             json_decode($this->recurs_on));
+      $conflicting_datetimes = array();
+      foreach ($recurring_dates as $recdate) {
+         $r_datetime_start = strtotime(date("Ymd", $recdate) . 't' . date("His", $this->datetime_start));
+         $r_datetime_end =  strtotime(date("Ymd", $recdate) . 't' . date("His", $this->datetime_end));
+
+         if ($this->check_time_conflict($r_datetime_start, $r_datetime_end)) {
+            array_push($conflicting_datetimes, date('n/d/Y', $r_datetime_start));
+         };
+      }
+      return $conflicting_datetimes;
+   }
+
+
+
+
    /**
    * Saves reservation request and prepares authorization code for emailing
    *
@@ -303,7 +328,6 @@ class PHWReserveReservationRequest {
          $res_id = $this->wpdb->get_results($query_get_res_id);
          $res_id = $res_id[0]->res_id;
         
-         // insert recurring reservations
          if ($this->recurs) {
             $this->insert_recurring_into_db($res_id); 
          }
@@ -317,22 +341,15 @@ class PHWReserveReservationRequest {
    * Inserts recurring reservations into table
    * @since 1.0
    *
-   * @todo +recur Add check for time conflict for each recur before adding to db
    */
    private function insert_recurring_into_db($res_id) {
       $recurring_dates = $this->get_recurring_dates(date('m/d/Y', $this->datetime_start),
                                              date('m/d/Y', $this->recurs_until),
                                              json_decode($this->recurs_on));
+
       foreach ($recurring_dates as $recdate) {
          $r_datetime_start = strtotime(date("Ymd", $recdate) . 't' . date("His", $this->datetime_start));
          $r_datetime_end =  strtotime(date("Ymd", $recdate) . 't' . date("His", $this->datetime_end));
-
-         if ($this->check_time_conflict($r_datetime_start, $r_datetime_end)) {
-            // @todo print message that there was a conflict with this time
-            continue; // skip this recur instance
-            // or should we cancel the reservation and remove any that have been inserted?
-            // or should we check this before we begin adding?!
-         };
 
          $success = $this->wpdb->insert($this->wpdb->phw_reservations_recur,
                                         array(
@@ -400,6 +417,16 @@ class PHWReserveReservationRequest {
       $body .= "<h3>Reservation Details:</h3>";
   		$body .= '<p><strong>Requested by: </strong>' . $this->patron_name . ' [' . $this->patron_email . ']<br />';
 		$body .= '<strong>Date: </strong>' . date('D, M j, Y', $this->datetime_start) . ' from ' . date('g:i A', $this->datetime_start) . ' - ' . date('g:i A', $this->datetime_end) . '<br />';
+
+      if ($this->recurs) {
+         $days = array();
+         foreach (json_decode($this->recurs_on) as $day => $value) {
+            array_push($days, ucfirst($day)); 
+         }
+         $body .= '<strong>Recurs every: </strong>' . implode(", ", $days) . '<br />';
+         $body .= '<strong>Recurs until: </strong>' . date('m/d/Y', $this->recurs_until) . '<br />';
+      }
+
 		$body .= '<strong>For: </strong>' . $this->purpose . '<br />';
 		$body .= '<strong>Room: </strong>' . $this->room . '</p>';
       $body .= "<p>If you need to change or cancel your reservation, please visit this link:";
@@ -573,5 +600,16 @@ class PHWReserveReservationRequest {
    private function no_id_match_error() {
       echo "ERROR: Reservation ID does not match existing reservation. Please contact "
            . antispambot(get_option('admin_email')) . " with this error.";
+   }
+
+   /**
+   * Returns true if reservation is recurring
+   *
+   */
+   public function is_recurring() {
+      if (isset($this->recurs))
+         return $this->recurs;
+      else
+         return false;
    }
 }

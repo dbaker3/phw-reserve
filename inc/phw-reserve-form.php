@@ -56,10 +56,16 @@ class PHWReserveForm {
    * @param mixed $emails Valid email domains configured in plugin settings
    * @since 1.0
    */
-   function __construct($rooms, $emails) {
+   function __construct($rooms, $emails, $selected_datetime = null, $selected_room = null) {
       $this->load_get_post_vars();
       $this->rooms = $rooms;
       $this->valid_emails = $emails;
+      if ($selected_room != null) {
+         $this->reserve_room = $selected_room;
+      }
+      if ($selected_datetime != null) {
+         $this->time_date_valid = $selected_datetime;
+      }
    }
    
    
@@ -96,9 +102,12 @@ class PHWReserveForm {
       if (isset($_POST['recurs_fri'])) $this->recurs_on['fri'] = true;
       if (isset($_POST['recurs_sat'])) $this->recurs_on['sat'] = true;
       // Passed from calendar via 'make reservation' link. Already timestamp.
-      if (isset($_GET['time_date'])) {
+    /*  if (isset($_GET['time_date'])) {
          $this->time_date_valid = $_GET['time_date'];
-      }
+      } // Passed from calendar via 'make reservation' link.
+      if (isset($_GET['reserve_room'])) {
+         $this->reserve_room = $_GET['reserve_room'];
+      } */
    }
 
    

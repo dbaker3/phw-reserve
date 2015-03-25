@@ -47,6 +47,8 @@ class PHWReservePageController {
    private $cal_submit_del = false;  // on logged in user clicking delete on res
    private $cal_submit_del_occur = false; // on logged in user clicking delete single instance in series
    private $cal_res_new = false;
+   private $cal_selected_date= false;
+   private $cal_selected_room = false;
    
    /**
    * Class constructor
@@ -111,6 +113,8 @@ class PHWReservePageController {
       if (isset($_GET['submit_del'])) $this->cal_submit_del = true;
       if (isset($_GET['submit_del_occur'])) $this->cal_submit_del_occur = true;
       if (isset($_GET['cal_res_new'])) $this->cal_res_new = true;
+      if (isset($_GET['cal_selected_date'])) $this->cal_selected_date= $_GET['cal_selected_date'];
+      if (isset($_GET['cal_selected_room'])) $this->cal_selected_room = $_GET['cal_selected_room'];
    }
    
    /**
@@ -172,11 +176,20 @@ class PHWReservePageController {
    /**
    * Handles clicking link to reserve a room
    *
-   * Creates new form object and calls its display_form method.
+   * Creates new form object and calls its display_form method. Includes 
+   * user's selected datetime and room if called from Calendar.
    * @since 1.0
    */
    private function handle_new_res_request() {
-      $form = new PHWReserveForm($this->rooms, $this->valid_emails);
+      if ($this->cal_selected_date && $this->cal_selected_room) {
+         $form = new PHWReserveForm($this->rooms,
+                                    $this->valid_emails,
+                                    $this->cal_selected_date,
+                                    $this->cal_selected_room);
+      }
+      else {
+         $form = new PHWReserveForm($this->rooms, $this->valid_emails);
+      }
       $form->display_form();
    }
   
@@ -211,7 +224,17 @@ class PHWReservePageController {
             $form->timeEndError = "";
             $form->display_form();
          }
-         else {
+         elseif ($reservation->is_recurring()) {
+            $conflicts = $reservation->check_recur_time_conflict();
+            if (!empty($conflicts)) {
+               $form->hasError = true;
+               $form->timeStartError = "{$form->reserve_room} is already reserved during this time on: " 
+                                        .implode(", ", $conflicts);
+               $form->timeEndError = "";
+               $form->display_form();
+            }
+         }
+         if (!$form->hasError) {
             if (is_user_logged_in()) {
                $reservation->create_auth_code();
                $reservation->insert_into_db();
