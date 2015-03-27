@@ -89,7 +89,6 @@ class PHWReserveReservationRequest {
    * @param string $auth
    * @since 1.0
    *
-   * @todo add code for recurring res
    */
    public function set_properties($res_id, $name, $email, $start, $end, $room, $purpose, 
                                   $auth, $recurs, $recurs_until, $recurs_on) {
@@ -406,10 +405,9 @@ class PHWReserveReservationRequest {
    *
    * @todo option for reply address
    * @todo option for message text
-   * @todo mention any +recur if any
    */
    private function send_confirmed_email($res_id) {
-      $conf_url = get_permalink() . '?email_res_id=' . $res_id . '&email_auth=' . $this->auth_code;
+      $conf_url = get_permalink() . '?edit_res_id=' . $res_id . '&email_auth=' . $this->auth_code;
     	$emailTo = $this->patron_email;
 		$subject = 'Room Reservation Confirmation';
       $body = "<h3>Reservation Confirmed!</h3>";
@@ -559,8 +557,6 @@ class PHWReserveReservationRequest {
    /**
    * Updates existing reservation in database 
    * @since 1.0
-   *
-   * @todo +recur if recurs, remove them and re-add them ???WORKING???
    */
    public function update_into_db() {
       $result = $this->wpdb->update($this->wpdb->phw_reservations,

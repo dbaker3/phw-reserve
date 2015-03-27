@@ -30,7 +30,7 @@ class PHWReservePageController {
    private $sv_submit_edit = false; // on submitting form for editing reservation
    
    // PHWReserveReservationRequest
-   private $email_res_id = false; 
+   private $edit_res_id = false; 
    private $email_transient = false;
    
    // PHWReserveForm
@@ -100,7 +100,7 @@ class PHWReservePageController {
       
       
       // PHWReserveReservationRequest email_transient
-      if (isset($_GET['email_res_id'])) $this->email_res_id = $_GET['email_res_id'];
+      if (isset($_GET['edit_res_id'])) $this->edit_res_id = $_GET['edit_res_id'];
       if (isset($_GET['email_transient'])) $this->email_transient = $_GET['email_transient'];
       
       // PHWReserveCalendar
@@ -136,8 +136,8 @@ class PHWReservePageController {
       }
       
       // Clicked edit link in email 
-      elseif ($this->email_res_id) {
-         $this->handle_email_edit_res_request();
+      elseif ($this->edit_res_id) {
+         $this->handle_edit_res_request();
       }
       
       // Submitted new reservation form
@@ -257,11 +257,11 @@ class PHWReservePageController {
    * @since 1.0
    * @todo how will admin edit/deletes be handled?
    */
-   private function handle_email_edit_res_request() {
+   private function handle_edit_res_request() {
       $form = new PHWReserveForm($this->rooms, $this->emails);
-      if (isset($this->email_res_id)) {
+      if (isset($this->edit_res_id)) {
          $reservation = new PHWReserveReservationRequest();
-         $res_data = $reservation->get_res_data($this->email_res_id);
+         $res_data = $reservation->get_res_data($this->edit_res_id);
          if ($res_data['auth_code'] == $this->email_auth) {
             $form->set_form_fields($res_data['res_id'],
                                    $res_data['patron_name'], 

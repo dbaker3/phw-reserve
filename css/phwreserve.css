@@ -1,4 +1,5 @@
 /*
+*  PHW-Reserve
 *  @todo make cross-browser
 */
 
@@ -14,20 +15,34 @@
    font-size: 90%;
 }
 
-.res-del {
+.cal-button {
    font-size: 80%;
    border: 1px solid #888;
    border-radius: 2px;
-   background: #dcc;
    padding: 0 0.25em 0 0.25em;
    text-decoration: none;
    cursor: pointer;
 }
 
-.res-del:hover {
-   background: #d55;
+.cal-button:hover {
    color: #fff;
    border: 1px solid #000;
+}
+
+.res-del {
+   background: #dcc;
+}
+
+.res-del:hover {
+   background: #d55;
+}
+
+.res-edit {
+   background: #ccd;
+}
+
+.res-edit:hover {
+   background: #40ABBA;
 }
 
 .make-res {
