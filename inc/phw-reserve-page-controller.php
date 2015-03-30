@@ -252,10 +252,10 @@ class PHWReservePageController {
    /**
    * Handles requests to edit/delete reservations
    *
-   * Called when change/cancel URL in confirmation email is visited. 
+   * Called when change/cancel URL in confirmation email is visited, or when
+   * logged in user clicks edit button on the Calendar. 
    *
    * @since 1.0
-   * @todo how will admin edit/deletes be handled?
    */
    private function handle_edit_res_request() {
       $form = new PHWReserveForm($this->rooms, $this->emails);
