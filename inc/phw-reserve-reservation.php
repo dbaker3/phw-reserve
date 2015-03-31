@@ -30,7 +30,12 @@ class PHWReserveReservationRequest {
    private $recurs_until;
    private $recurs_on;
    private $wpdb;
-   
+  
+   // Plugin settings
+   private $temp_res_len;
+   private $keep_old_len;
+   private $email_cust;
+   private $reply_to;
    
    /**
    * Sets up reservation properties
@@ -69,6 +74,8 @@ class PHWReserveReservationRequest {
       $this->wpdb =& $wpdb;
       $this->wpdb->phw_reservations = "{$this->wpdb->prefix}phw_reservations";
       $this->wpdb->phw_reservations_recur = "{$this->wpdb->prefix}phw_reservations_recur";
+
+      $this->load_plugin_settings();
    }
 
    
@@ -104,8 +111,22 @@ class PHWReserveReservationRequest {
       $this->recurs_until = $recurs_until;
       $this->recurs_on = json_encode($recurs_on);
    }
-   
-   
+  
+
+   /**
+   * Loads plugin settings
+   * @since 1.0
+   */
+   private function load_plugin_settings() {
+      $option_name = PHWReserveSettings::get_option_name();
+      $settings = get_option($option_name);
+      $this->temp_res_len = $settings['temp_res_len'];
+      $this->keep_old_len = $settings['keep_old_len'];
+      $this->email_cust = $settings['email_cust'];
+      $this->reply_to = $settings['reply_to'];
+   }
+
+
    /**
    * Returns true if requested time conflicts with an existing reservation
    *
@@ -124,8 +145,6 @@ class PHWReserveReservationRequest {
    * @return boolean
    *
    * @todo check time conflict with Today's Hours widget if available
-   * @todo should this be moved to the PHWReserveForm class?
-   * @todo should this be moved to a completely different class?!
    */
    public function check_time_conflict($start = null, $end = null) {
       if ($start === null || $end === null) {
@@ -228,7 +247,7 @@ class PHWReserveReservationRequest {
                               'room'           => $this->room, 
                               'purpose'        => $this->purpose, 
                               'auth_code'      => $this->auth_code);
-      set_transient($transient_name, $transient_data, HOUR_IN_SECONDS);
+      set_transient($transient_name, $transient_data, ($this->temp_res_len * HOUR_IN_SECONDS));
       
       $this->send_auth_code_email($transient_name);
    }
@@ -265,7 +284,6 @@ class PHWReserveReservationRequest {
    * @return void
    *
    * @todo option for reply address
-   * @todo DRY email methods
    */
    private function send_auth_code_email($transient_name) {
       $conf_url = get_permalink() . '?email_transient=' . $transient_name . '&auth_code=' . $this->auth_code;
@@ -278,8 +296,8 @@ class PHWReserveReservationRequest {
 		$body .= '<strong>For: </strong>' . $this->purpose . '<br />';
 		$body .= '<strong>Room: </strong>' . $this->room . '</p>';
 
-		$headers[] = 'From: Room Reservation Webform <' . get_option('admin_email') . '>';
-		$headers[] = 'Reply-To: ' . get_option('admin_email');
+		$headers[] = 'From: Room Reservation Webform <' . $this->reply_to . '>';
+		$headers[] = 'Reply-To: ' . $this->reply_to;
 		$headers[] = 'content-type: text/html';
 
 		if (wp_mail( $emailTo, $subject, $body, $headers )) {
@@ -411,7 +429,7 @@ class PHWReserveReservationRequest {
     	$emailTo = $this->patron_email;
 		$subject = 'Room Reservation Confirmation';
       $body = "<h3>Reservation Confirmed!</h3>";
-      $body .= "<p>Your reservation request is complete. If someone is in the room when you arrive, please tell them that you have a reservation and politely ask them to leave. If you are uncomfortable doing this, please ask a library worker to assist you.</p>";
+      $body .= "<p>{$this->email_cust}</p>";
       $body .= "<h3>Reservation Details:</h3>";
   		$body .= '<p><strong>Requested by: </strong>' . $this->patron_name . ' [' . $this->patron_email . ']<br />';
 		$body .= '<strong>Date: </strong>' . date('D, M j, Y', $this->datetime_start) . ' from ' . date('g:i A', $this->datetime_start) . ' - ' . date('g:i A', $this->datetime_end) . '<br />';
@@ -430,8 +448,8 @@ class PHWReserveReservationRequest {
       $body .= "<p>If you need to change or cancel your reservation, please visit this link:";
       $body .= "<br /><a href='{$conf_url}'>{$conf_url}</a></p>";
 
-		$headers[] = 'From: Room Reservation Webform <' . get_option('admin_email') . '>';
-		$headers[] = 'Reply-To: ' . get_option('admin_email');
+		$headers[] = 'From: Room Reservation Webform <' . $this->reply_to . '>';
+		$headers[] = 'Reply-To: ' . $this->reply_to;
 		$headers[] = 'content-type: text/html';
       
       if (wp_mail( $emailTo, $subject, $body, $headers )) {

@@ -67,15 +67,15 @@ class PHWReserveCalendar {
             <select class="text three-fourths" name='cal_month' id='cal_month' required>
                <?php for ($i = 0; $i < 12; $i++) {
                echo "<option";
-               if (isset($this->cal_month) && date('n', strtotime('this month + ' . $i . " month")) == date('n', strtotime($this->cal_month))) {echo " selected";};
-               echo ">" . date('F', strtotime('this month + ' . $i . " month")) . "</option>";
+               if (isset($this->cal_month) && date('n', strtotime('first day of ' . date('F Y') . ' + ' . $i . " month")) == date('n', strtotime('first day of ' . $this->cal_month . ' ' . date('Y')))) {echo " selected";};
+               echo ">" . date('F', strtotime('first day of ' . date('F Y') . ' + ' . $i . " month")) . "</option>";
                } ?>
             </select>
             </p>
             <button class='submit full' type='submit' name='cal_view_cal' value='true'>View</button>
          </form>
       </div>
-   <?php
+   <?php 
    }
 
 
@@ -103,9 +103,9 @@ class PHWReserveCalendar {
    *
    */
    private function query_db() {
-      $this->cal_month_timestamp = strtotime($this->cal_month);
+      $this->cal_month_timestamp = strtotime('first day of ' . $this->cal_month . ' ' . date('Y'));
       if (date('n') > date('n', $this->cal_month_timestamp)) {
-         $this->cal_month_timestamp = strtotime(date('M', $this->cal_month_timestamp) . " +1 year");
+         $this->cal_month_timestamp = strtotime("first day of " . date('M', $this->cal_month_timestamp) . ' ' . (date('Y') + 1));
       }
       global $wpdb;
       $wpdb->phw_reservations = "{$wpdb->prefix}phw_reservations";

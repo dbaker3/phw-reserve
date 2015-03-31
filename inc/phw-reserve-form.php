@@ -49,6 +49,9 @@ class PHWReserveForm {
    private $purposeError;
    private $roomError;
 
+   // Plugin setting
+   private $max_res_len;
+
    /**
    * Loads GET & POST variables, available rooms, and valid emails
    *
@@ -66,8 +69,20 @@ class PHWReserveForm {
       if ($selected_datetime != null) {
          $this->time_date_valid = $selected_datetime;
       }
+      $this->load_plugin_settings();
    }
    
+   
+   /**
+   * Loads plugin settings
+   * @since 1.0
+   */
+   private function load_plugin_settings() {
+      $option_name = PHWReserveSettings::get_option_name();
+      $settings = get_option($option_name);
+      $this->max_res_len = $settings['max_res_len'];
+   }
+
    
    /**
    * Loads GET & POST variables into object properties
@@ -173,9 +188,9 @@ class PHWReserveForm {
    	} else if ($this->time_end_valid <= $this->time_start_valid) {    // TODO: Fix ending at midnight
    		$this->timeEndError = 'The end time must be later than the start time.';
    		$this->hasError = true;
-   	} else if ($this->time_end_valid - $this->time_start_valid > 14400 && $this->time_start_valid !== false) {  // TODO: Option for time block length
+   	} else if ($this->time_end_valid - $this->time_start_valid > ($this->max_res_len * HOUR_IN_SECONDS) && $this->time_start_valid !== false) {  
          if (!is_user_logged_in()) {
-      		$this->timeEndError = 'You may not reserve a room for more than four hours at a time.';
+      		$this->timeEndError = "You may not reserve a room for more than {$this->max_res_len} hours at a time.";
             $this->hasError = true;
          }
    	}
