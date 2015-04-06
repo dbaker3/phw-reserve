@@ -7,6 +7,13 @@ Plugin URI: https://github.com/dbaker3/phw-reserve
 Author: David Baker - Milligan College
 Author URI: https://github.com/dbaker3
 License: GPL2
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
+*/
+
+/*
+* @author David Baker
+* @copyright 2015 Milligan College
+* @license https://www.gnu.org/licenses/gpl-2.0.html GNU Public License v2
 */
 
 include 'inc/phw-reserve-db-install.php';

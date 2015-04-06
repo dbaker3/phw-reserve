@@ -4,6 +4,7 @@
 *
 * @author David Baker
 * @copyright 2015 Milligan College
+* @license https://www.gnu.org/licenses/gpl-2.0.html GNU Public License v2
 * @since 1.0
 *
 * @todo make more clear distinction between edit and new
