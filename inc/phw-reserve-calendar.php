@@ -73,7 +73,7 @@ class PHWReserveCalendar {
                } ?>
             </select>
             </p>
-            <button class='submit full' type='submit' name='cal_view_cal' value='true'>View</button>
+            <button class='submit full' type='submit' name='method' value='handle_cal_request'>View</button>
          </form>
       </div>
    <?php 
@@ -175,7 +175,7 @@ class PHWReserveCalendar {
             continue;   // don't print dates before today
          }
          $the_date = strtotime(date('F', $this->cal_month_timestamp) . " " . $i . " " . date('Y', $this->cal_month_timestamp));
-         echo "<div class='day-head'>" . date('F', $this->cal_month_timestamp) . " {$i} - " . date('l', $the_date) . "<span class='make-res'><a href='?cal_res_new=true&cal_selected_date={$the_date}&cal_selected_room=" . urlencode($this->cal_room) . "'>make reservation</a></span></div>";
+         echo "<div class='day-head'>" . date('F', $this->cal_month_timestamp) . " {$i} - " . date('l', $the_date) . "<span class='make-res'><a href='?method=handle_new_res_request&cal_selected_date={$the_date}&cal_selected_room=" . urlencode($this->cal_room) . "'>make reservation</a></span></div>";
          echo "<ul>";
          foreach ($results as $res) {
             $res_date = date('MjY', $res['datetime_start']);

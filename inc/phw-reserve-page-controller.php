@@ -19,6 +19,7 @@
 class PHWReservePageController {
    private $rooms;
    private $valid_emails;
+   private $method;
 
    // GET & POST variables
    private $menu_room_cal = false;    // on main menu - View room calendar
@@ -165,6 +166,16 @@ class PHWReservePageController {
       elseif ($this->cal_submit_del_occur) {
          $this->handle_del_occur_submission();
       }
+     
+      // @TODO: reimplementation 
+      elseif ($_GET('method') == 'handle_cal_request') {
+         $this->handle_cal_request();
+      } 
+      elseif ($_GET('method') == 'handle_new_res_request') {
+         $this->handle_new_res_request();
+      }
+     
+     
       
       // Initial Page Load
       else {
