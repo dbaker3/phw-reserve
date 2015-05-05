@@ -168,10 +168,10 @@ class PHWReservePageController {
       }
      
       // @TODO: reimplementation 
-      elseif ($_GET('method') == 'handle_cal_request') {
+      elseif ($_GET['method'] == 'handle_cal_request') {
          $this->handle_cal_request();
       } 
-      elseif ($_GET('method') == 'handle_new_res_request') {
+      elseif ($_GET['method'] == 'handle_new_res_request') {
          $this->handle_new_res_request();
       }
      
