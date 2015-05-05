@@ -37,10 +37,10 @@ class PHWReserveMenu {
    public function display_menu() { ?>
       <div class='welshimer-form' action=''>
          <form action='' method='GET'>
-            <button class='submit three-fourths' type='submit' name='method' value='handle_cal_request'>Reserve a Room</button>
+            <button class='submit three-fourths' type='submit' name='method' value='handle_new_res_request'>Reserve a Room</button>
          </form>
          <form action='' method='GET'>
-            <button class='submit three-fourths' type='submit' name='method' value='handle_new_res_request'>View Room Availability</button>
+            <button class='submit three-fourths' type='submit' name='method' value='handle_cal_request'>View Room Availability</button>
          </form>
       </div> <?php
    }
