@@ -306,11 +306,13 @@ class PHWReserveForm {
          } 
          if ($editing) {
             echo "<input class='submit full' type='submit' name='submit_edit' value='Save Changes' tabindex='11' >"
+                 . "<input type='hidden' name='method' value='handle_edit_res_submission'>"
                  . "<input type='hidden' name='auth' value='{$this->auth_code}'>"
                  . "<input type='hidden' name='res_id' value='{$this->res_id}'>";
          }
          else {
-            echo "<input class='submit full' type='submit' name='submit_new' value='Send Request' tabindex='11' >"; 
+            echo "<input class='submit full' type='submit' name='submit_new' value='Send Request' tabindex='11' >" 
+                 . "<input type='hidden' name='method' value='handle_new_res_submission'";
          }
          ?>
          </p>

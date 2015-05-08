@@ -287,7 +287,7 @@ class PHWReserveReservationRequest {
    * @todo option for reply address
    */
    private function send_auth_code_email($transient_name) {
-      $conf_url = get_permalink() . '?email_transient=' . $transient_name . '&auth_code=' . $this->auth_code;
+      $conf_url = get_permalink() . '?method=handle_auth_code_submission&amp;transient=' . $transient_name . '&amp;auth_code=' . $this->auth_code;
    	$emailTo = $this->patron_email;
 		$subject =  'Please confirm your room reservation request';
 		$body = '<h3>Please click the following link to confirm your room reservation request made ' . date("F j, Y, g:i a") .'</h3>';
@@ -426,7 +426,7 @@ class PHWReserveReservationRequest {
    * @todo option for message text
    */
    private function send_confirmed_email($res_id) {
-      $conf_url = get_permalink() . '?edit_res_id=' . $res_id . '&email_auth=' . $this->auth_code;
+      $conf_url = get_permalink() . '?method=handle_edit_res_request&amp;res_id=' . $res_id . '&amp;auth_code=' . $this->auth_code;
     	$emailTo = $this->patron_email;
 		$subject = 'Room Reservation Confirmation';
       $body = "<h3>Reservation Confirmed!</h3>";
