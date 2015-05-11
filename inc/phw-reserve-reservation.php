@@ -155,10 +155,11 @@ class PHWReserveReservationRequest {
 
       // against confirmed reservations
       $query = "SELECT res_id FROM {$this->wpdb->phw_reservations}
-                WHERE {$start} < datetime_end
-                AND {$end} > datetime_start
-                AND '{$this->room}' = room
-                AND {$this->res_id} <> res_id";
+                WHERE %d < datetime_end
+                AND %d > datetime_start
+                AND %s = room
+                AND %d <> res_id;";
+      $query = $this->wpdb->prepare($query, $start, $end, $this->room, $this->res_id);
       $conflicting = $this->wpdb->query($query);
       
       // against unconfirmed reservations (transients)
@@ -192,9 +193,10 @@ class PHWReserveReservationRequest {
                          WHERE {$this->wpdb->phw_reservations}.res_id =
                                {$this->wpdb->phw_reservations_recur}.res_id
                         ) AS recurring_reservations_set
-                   WHERE '{$this->room}' = room
-                   AND {$start} < r_datetime_end
-                   AND {$end} > r_datetime_start";
+                   WHERE %s = room
+                   AND %d < r_datetime_end
+                   AND %d > r_datetime_start";
+         $query = $this->wpdb->prepare($query, $this->room, $start, $end);
          $conflicting = $this->wpdb->query($query);
       }
 
@@ -287,7 +289,7 @@ class PHWReserveReservationRequest {
    * @todo option for reply address
    */
    private function send_auth_code_email($transient_name) {
-      $conf_url = get_permalink() . '?email_transient=' . $transient_name . '&auth_code=' . $this->auth_code;
+      $conf_url = get_permalink() . '?method=handle_auth_code_submission&amp;transient=' . $transient_name . '&amp;auth_code=' . $this->auth_code;
    	$emailTo = $this->patron_email;
 		$subject =  'Please confirm your room reservation request';
 		$body = '<h3>Please click the following link to confirm your room reservation request made ' . date("F j, Y, g:i a") .'</h3>';
@@ -319,8 +321,9 @@ class PHWReserveReservationRequest {
    */
    public function insert_into_db() {
       $query_get_res_id = "SELECT res_id FROM {$this->wpdb->phw_reservations} 
-                           WHERE datetime_start = '{$this->datetime_start}' 
-                           AND room = '{$this->room}'";
+                           WHERE datetime_start = %d 
+                           AND room = %s";
+      $query_get_res_id = $this->wpdb->prepare($query_get_res_id, $this->datetime_start, $this->room);
       if ($this->wpdb->get_results($query_get_res_id)) {
          echo "This reservation has been confirmed.";
       }
@@ -426,7 +429,7 @@ class PHWReserveReservationRequest {
    * @todo option for message text
    */
    private function send_confirmed_email($res_id) {
-      $conf_url = get_permalink() . '?edit_res_id=' . $res_id . '&email_auth=' . $this->auth_code;
+      $conf_url = get_permalink() . '?method=handle_edit_res_request&amp;res_id=' . $res_id . '&amp;auth_code=' . $this->auth_code;
     	$emailTo = $this->patron_email;
 		$subject = 'Room Reservation Confirmation';
       $body = "<h3>Reservation Confirmed!</h3>";
@@ -493,7 +496,8 @@ class PHWReserveReservationRequest {
    * @todo replace $res_id parameter with $this->res_id
    */
    public function get_res_data($res_id) {
-      $query = "SELECT * FROM {$this->wpdb->phw_reservations} WHERE res_id = '{$res_id}'";
+      $query = "SELECT * FROM {$this->wpdb->phw_reservations} WHERE res_id = %d";
+      $query = $this->wpdb->prepare($query, $res_id);
       $res_data = $this->wpdb->get_row($query, ARRAY_A);
       if ($res_data)
          return $res_data;
@@ -512,7 +516,8 @@ class PHWReserveReservationRequest {
    * @todo? replace $res_id parameter with $this->res_id  
    */
    public function get_res_auth_code($res_id) {
-      $query = "SELECT auth_code FROM {$this->wpdb->phw_reservations} WHERE res_id = '{$res_id}'";
+      $query = "SELECT auth_code FROM {$this->wpdb->phw_reservations} WHERE res_id = %d";
+      $query = $this->wpdb->prepare($query, $res_id);
       $auth_code = $this->wpdb->get_row($query, ARRAY_A);
       if ($auth_code['auth_code']) 
          return $auth_code['auth_code'];

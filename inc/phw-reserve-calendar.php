@@ -55,7 +55,7 @@ class PHWReserveCalendar {
          <form>
             <p class="form">
             <label class="label" for="cal_room">Room:</label>
-            <select class="text three-fourths" name='cal_room' id='cal_room' required>
+            <select class="text three-fourths" name='room' id='cal_room' required>
                <?php foreach ($this->rooms as $room) { 
                echo "<option";
                if ($room == $this->cal_room) {echo " selected";};
@@ -65,7 +65,7 @@ class PHWReserveCalendar {
             </p>
             <p class="form">
             <label class="label" for="cal_month">Month:</label>
-            <select class="text three-fourths" name='cal_month' id='cal_month' required>
+            <select class="text three-fourths" name='month' id='cal_month' required>
                <?php for ($i = 0; $i < 12; $i++) {
                echo "<option";
                if (isset($this->cal_month) && date('n', strtotime('first day of ' . date('F Y') . ' + ' . $i . " month")) == date('n', strtotime('first day of ' . $this->cal_month . ' ' . date('Y')))) {echo " selected";};
@@ -73,7 +73,7 @@ class PHWReserveCalendar {
                } ?>
             </select>
             </p>
-            <button class='submit full' type='submit' name='cal_view_cal' value='true'>View</button>
+            <button class='submit full' type='submit' name='method' value='handle_cal_request'>View</button>
          </form>
       </div>
    <?php 
@@ -113,10 +113,10 @@ class PHWReserveCalendar {
       $query = "SELECT res_id, datetime_start, datetime_end, patron_name, patron_email, purpose, auth_code
                 FROM {$wpdb->phw_reservations}
                 WHERE 
-                '{$this->cal_room}' = room AND
-                FROM_UNIXTIME({$this->cal_month_timestamp}, '%c') = FROM_UNIXTIME(datetime_start, '%c')
+                %s = room AND
+                FROM_UNIXTIME(%d, '%%c') = FROM_UNIXTIME(datetime_start, '%%c')
                 ORDER BY datetime_start";
-      
+      $query = $wpdb->prepare($query, $this->cal_room, $this->cal_month_timestamp);
       $result_res = $wpdb->get_results($query, ARRAY_A);
 
       // Recurring reservations from recur table
@@ -129,10 +129,10 @@ class PHWReserveCalendar {
                 FROM {$wpdb->phw_reservations_recur}, {$wpdb->phw_reservations}
                 WHERE 
                 {$wpdb->phw_reservations_recur}.res_id = {$wpdb->phw_reservations}.res_id AND
-                '{$this->cal_room}' = {$wpdb->phw_reservations}.room AND
-                FROM_UNIXTIME({$this->cal_month_timestamp}, '%c') = FROM_UNIXTIME({$wpdb->phw_reservations_recur}.r_datetime_start, '%c')
+                %s = {$wpdb->phw_reservations}.room AND
+                FROM_UNIXTIME(%d, '%%c') = FROM_UNIXTIME({$wpdb->phw_reservations_recur}.r_datetime_start, '%%c')
                 ORDER BY {$wpdb->phw_reservations_recur}.r_datetime_start";
-
+      $query = $wpdb->prepare($query, $this->cal_room, $this->cal_month_timestamp);
       $result_rec = $wpdb->get_results($query, ARRAY_A);
       $merged = array_merge($result_res, $result_rec);
       
@@ -175,7 +175,7 @@ class PHWReserveCalendar {
             continue;   // don't print dates before today
          }
          $the_date = strtotime(date('F', $this->cal_month_timestamp) . " " . $i . " " . date('Y', $this->cal_month_timestamp));
-         echo "<div class='day-head'>" . date('F', $this->cal_month_timestamp) . " {$i} - " . date('l', $the_date) . "<span class='make-res'><a href='?cal_res_new=true&cal_selected_date={$the_date}&cal_selected_room=" . urlencode($this->cal_room) . "'>make reservation</a></span></div>";
+         echo "<div class='day-head'>" . date('F', $this->cal_month_timestamp) . " {$i} - " . date('l', $the_date) . "<span class='make-res'><a href='?method=handle_new_res_request&amp;date={$the_date}&amp;room=" . urlencode($this->cal_room) . "'>make reservation</a></span></div>";
          echo "<ul>";
          foreach ($results as $res) {
             $res_date = date('MjY', $res['datetime_start']);
@@ -184,12 +184,12 @@ class PHWReserveCalendar {
                echo "<li class='res-info'>";
                if (is_user_logged_in()) {
                   if (array_key_exists('recur_id', $res)) {
-                     echo " <a href='?cal_res_id={$res['res_id']}&amp;submit_del=true&amp;cal_auth={$res['auth_code']}' onclick='return confirm(\"Are you sure you want to delete this ENTIRE SERIES of recurring reservations?\")'  class='cal-button res-del'>delete series</a> ";
-                     echo " <a href='?cal_recur_id={$res['recur_id']}&amp;cal_res_id={$res['res_id']}&amp;submit_del_occur=true&amp;cal_auth={$res['auth_code']}' onclick='return confirm(\"Are you sure you want to delete this SINGLE INSTANCE from the series of recurring reservations?\")'  class='cal-button res-del'>delete instance</a> ";
+                     echo " <a href='?method=handle_del_res_submission&amp;res_id={$res['res_id']}&amp;auth_code={$res['auth_code']}' class='cal-button res-del res-del-series'>delete series</a> ";
+                     echo " <a href='?method=handle_del_occur_submission&amp;recur_id={$res['recur_id']}&amp;res_id={$res['res_id']}&amp;auth_code={$res['auth_code']}' class='cal-button res-del res-del-occur'>delete instance</a> ";
                   } 
                   else
-                     echo " <a href='?cal_res_id={$res['res_id']}&amp;submit_del=true&amp;cal_auth={$res['auth_code']}' onclick='return confirm(\"Are you sure you want to delete this reservation?\")'  class='cal-button res-del'>delete</a> ";
-                     echo " <a href='?edit_res_id={$res['res_id']}&amp;email_auth={$res['auth_code']}' class='cal-button res-edit'>edit</a> ";
+                     echo " <a href='?method=handle_del_res_submission&amp;res_id={$res['res_id']}&amp;auth_code={$res['auth_code']}' class='cal-button res-del res-del-single'>delete</a> ";
+                     echo " <a href='?method=handle_edit_res_request&amp;res_id={$res['res_id']}&amp;auth_code={$res['auth_code']}' class='cal-button res-edit'>edit</a> ";
                }
                echo "Reserved " . date('g:i a', $res['datetime_start']) . " - " . date('g:i a', $res['datetime_end']);
                if (is_user_logged_in()) {

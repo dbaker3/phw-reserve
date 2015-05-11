@@ -19,37 +19,8 @@
 class PHWReservePageController {
    private $rooms;
    private $valid_emails;
+   private $method;
 
-   // GET & POST variables
-   private $menu_room_cal = false;    // on main menu - View room calendar
-   private $menu_new_res = false;     // on main menu - Reserve a room
-   
-   private $email_edit_res = false;    // on clicking edit/cancel link in email
-   
-   private $form_submit_new = false;  // on submitting form for new reservation
-   private $email_auth_code = false;   // on clicking auth code link in email
-   private $sv_submit_edit = false; // on submitting form for editing reservation
-   
-   // PHWReserveReservationRequest
-   private $edit_res_id = false; 
-   private $email_transient = false;
-   
-   // PHWReserveForm
-   private $email_auth = false;
-   private $recurs = false;
-
-   // PHWReserveCalendar
-   private $cal_view_cal = false;
-   private $cal_room = false;
-   private $cal_month = false;
-   private $cal_res_id = false;
-   private $cal_recur_id = false;
-   private $cal_auth = false;
-   private $cal_submit_del = false;  // on logged in user clicking delete on res
-   private $cal_submit_del_occur = false; // on logged in user clicking delete single instance in series
-   private $cal_res_new = false;
-   private $cal_selected_date= false;
-   private $cal_selected_room = false;
    
    /**
    * Class constructor
@@ -65,7 +36,6 @@ class PHWReservePageController {
    * @since 1.0
    */
    public function init() {
-      $this->load_get_post_vars();
       $this->handle_page_request();
    }
    
@@ -80,43 +50,7 @@ class PHWReservePageController {
       $this->rooms = array_map('trim', explode("\n", $settings['rooms']));
       $this->valid_emails = array_map('trim', explode("\n", $settings['valid_emails']));
    }
-   
-   
-   /**
-   * Loads GET and POST vars into object properties
-   *
-   * @since 1.0
-   * @todo Should I preload all of these or just test for them as needed?
-   */
-   private function load_get_post_vars() {
-      if (isset($_GET['menu_room_cal'])) $this->menu_room_cal = $_GET['menu_room_cal'];
-      if (isset($_GET['menu_res_new'])) $this->menu_new_res = $_GET['menu_res_new'];
-      if (isset($_POST['submit_new'])) $this->form_submit_new = true;
-      if (isset($_GET['auth_code'])) $this->email_auth_code = $_GET['auth_code'];
-      if (isset($_POST['submit_edit'])) $this->sv_submit_edit = true;
-      
-      // PHWReserveForm
-      if (isset($_GET['email_auth'])) $this->email_auth = $_GET['email_auth'];
-      if (isset($_POST['recurs'])) $this->recurs = true;
-      
-      
-      // PHWReserveReservationRequest email_transient
-      if (isset($_GET['edit_res_id'])) $this->edit_res_id = $_GET['edit_res_id'];
-      if (isset($_GET['email_transient'])) $this->email_transient = $_GET['email_transient'];
-      
-      // PHWReserveCalendar
-      if (isset($_GET['cal_view_cal'])) $this->cal_view_cal = $_GET['cal_view_cal'];
-      if (isset($_GET['cal_room'])) $this->cal_room = $_GET['cal_room'];
-      if (isset($_GET['cal_month'])) $this->cal_month = $_GET['cal_month'];
-      if (isset($_GET['cal_res_id'])) $this->cal_res_id = $_GET['cal_res_id'];
-      if (isset($_GET['cal_recur_id'])) $this->cal_recur_id = $_GET['cal_recur_id'];
-      if (isset($_GET['cal_auth'])) $this->cal_auth = $_GET['cal_auth'];
-      if (isset($_GET['submit_del'])) $this->cal_submit_del = true;
-      if (isset($_GET['submit_del_occur'])) $this->cal_submit_del_occur = true;
-      if (isset($_GET['cal_res_new'])) $this->cal_res_new = true;
-      if (isset($_GET['cal_selected_date'])) $this->cal_selected_date= $_GET['cal_selected_date'];
-      if (isset($_GET['cal_selected_room'])) $this->cal_selected_room = $_GET['cal_selected_room'];
-   }
+
    
    /**
    * Sends control to proper class on page load
@@ -126,50 +60,39 @@ class PHWReservePageController {
    * @return void
    */
    private function handle_page_request() {
-      // Selected - View Room Calendar
-      if ($this->menu_room_cal || $this->cal_view_cal) {
-         $this->handle_cal_request();
-      }
+      $method = isset($_GET['method']) ? $_GET['method'] : (isset($_POST['method']) ? $_POST['method'] : null);
       
-      // Selected - Reserve a Room
-      elseif ($this->menu_new_res || $this->cal_res_new) {
+      if ($method == 'handle_cal_request') {
+         $this->handle_cal_request();
+      } 
+      elseif ($method == 'handle_new_res_request') {
          $this->handle_new_res_request();
       }
-      
-      // Clicked edit link in email 
-      elseif ($this->edit_res_id) {
+      elseif ($method == 'handle_edit_res_request') {
          $this->handle_edit_res_request();
       }
-      
-      // Submitted new reservation form
-      elseif ($this->form_submit_new) {
+      elseif ($method == 'handle_new_res_submission') {
          $this->handle_new_res_submission();
       }
-      
-      // Clicked authentication code link in email
-      elseif ($this->email_auth_code) {
-         $this->handle_auth_code_submission();
-      }
-      
-      // Submitted edit/cancel reservation form
-      elseif ($this->sv_submit_edit) {
+      elseif ($method == 'handle_edit_res_submission') {
          $this->handle_edit_res_submission();
       }
-     
-      // Logged in user requested to delete
-      elseif ($this->cal_submit_del) {
+      elseif ($method == 'handle_auth_code_submission') {
+         $this->handle_auth_code_submission();
+      }
+      elseif ($method == 'handle_del_res_submission') {
          $this->handle_del_res_submission();
       }
-
-      // Logged in user requested to delete single recur instance
-      elseif ($this->cal_submit_del_occur) {
+      elseif ($method == 'handle_del_occur_submission') {
          $this->handle_del_occur_submission();
       }
-      
-      // Initial Page Load
-      else {
+      elseif ($method == null) {
          $menu = new PHWReserveMenu($this->rooms);
          $menu->display_menu();
+      }
+      else {
+         echo "ERROR: Method <strong>{$method}</strong> is not valid. Please contact "
+              . antispambot(get_option('admin_email')) . " with this error.";
       }
    }
    
@@ -182,11 +105,13 @@ class PHWReservePageController {
    * @since 1.0
    */
    private function handle_new_res_request() {
-      if ($this->cal_selected_date && $this->cal_selected_room) {
+      $cal_selected_date = isset($_GET['date']) ? $_GET['date'] : null;
+      $cal_selected_room = isset($_GET['room']) ? $_GET['room'] : null;
+      if ($cal_selected_date && $cal_selected_room) {
          $form = new PHWReserveForm($this->rooms,
                                     $this->valid_emails,
-                                    $this->cal_selected_date,
-                                    $this->cal_selected_room);
+                                    $cal_selected_date,
+                                    $cal_selected_room);
       }
       else {
          $form = new PHWReserveForm($this->rooms, $this->valid_emails);
@@ -260,10 +185,12 @@ class PHWReservePageController {
    */
    private function handle_edit_res_request() {
       $form = new PHWReserveForm($this->rooms, $this->emails);
-      if (isset($this->edit_res_id)) {
+      $res_id = isset($_GET['res_id']) ? $_GET['res_id'] : null;
+      if ($res_id) {
          $reservation = new PHWReserveReservationRequest();
-         $res_data = $reservation->get_res_data($this->edit_res_id);
-         if ($res_data['auth_code'] == $this->email_auth) {
+         $res_data = $reservation->get_res_data($res_id);
+         $received_auth_code = isset($_GET['auth_code']) ? $_GET['auth_code'] : null;
+         if ($res_data['auth_code'] == $received_auth_code && $received_auth_code != null) {
             $form->set_form_fields($res_data['res_id'],
                                    $res_data['patron_name'], 
                                    $res_data['patron_email'],
@@ -296,7 +223,10 @@ class PHWReservePageController {
    * @since 1.0
    */
    private function handle_cal_request() {
-      if ($this->cal_room && $this->cal_month) 
+      $cal_room = isset($_GET['room']) ? $_GET['room'] : null;
+      $cal_month = isset($_GET['month']) ? $_GET['month'] : null;
+      
+      if ($cal_room && $cal_month)
          $submitted = true;
       else
          $submitted = false;
@@ -304,7 +234,7 @@ class PHWReservePageController {
       $calendar = new PHWReserveCalendar($this->rooms);
 
       if ($submitted) 
-         $calendar->set_fields($this->cal_room, $this->cal_month);
+         $calendar->set_fields($cal_room, $cal_month);
 
       $calendar->show_form();
       if ($submitted) 
@@ -321,10 +251,11 @@ class PHWReservePageController {
    * @todo Should I load these GET variables beforehand?
    */
    private function handle_auth_code_submission() {
-      $transient_name = $this->email_transient;
+      $transient_name = isset($_GET['transient']) ? $_GET['transient'] : null; 
       $transient_data = get_transient($transient_name);
       $auth_code = $transient_data['auth_code'];
-      if ($auth_code == $this->email_auth_code) {
+      $received_auth_code = isset($_GET['auth_code']) ? $_GET['auth_code'] : null;
+      if ($auth_code == $received_auth_code && $auth_code != null) {
          $reservation = new PHWReserveReservationRequest($transient_data['patron_name'], 
                                                          $transient_data['patron_email'], 
                                                          $transient_data['datetime_start'], 
@@ -416,11 +347,12 @@ class PHWReservePageController {
    * @todo +recur $reservation->recurs needs set true if recurs to remove from recur table
    */
    private function handle_del_res_submission() {
-      $res_id = $this->cal_res_id;
+      $res_id = isset($_GET['res_id']) ? $_GET['res_id'] : null; 
       if (is_user_logged_in()) {
          $reservation = new PHWReserveReservationRequest();
          $res_auth_code = $reservation->get_res_auth_code($res_id);
-         if ($this->cal_auth == $res_auth_code) {
+         $received_auth_code = isset($_GET['auth_code']) ? $_GET['auth_code'] : null;
+         if ($received_auth_code == $res_auth_code && $res_auth_code != null) {
             $res_data = $reservation->get_res_data($res_id);
             $reservation->set_properties($res_data['res_id'],
                                          $res_data['patron_name'], 
@@ -456,15 +388,17 @@ class PHWReservePageController {
    * @since 1.0
    */
    private function handle_del_occur_submission() {
-      $res_id = $this->cal_res_id;
-      $recur_id = $this->cal_recur_id;  
+      $res_id = isset($_GET['res_id']) ? $_GET['res_id'] : null;
+      $recur_id = isset($_GET['recur_id']) ? $_GET['recur_id'] : null;
        if (is_user_logged_in()) {
          $reservation = new PHWReserveReservationRequest();
          $res_auth_code = $reservation->get_res_auth_code($res_id);
-         if ($this->cal_auth == $res_auth_code) {
+         $received_auth_code = isset($_GET['auth_code']) ? $_GET['auth_code'] : null;
+         if ($received_auth_code == $res_auth_code && $res_auth_code != null) {
             $reservation->del_recur($recur_id);
          }
          else {
+            echo "recur_id: {$recur_id}<br>res_id: {$res_id}<br>res_auth_code: {$res_auth_code}<br>received_auth_code: {$received_auth_code}<br>";
             echo "ERROR: Authorization code does not match requested reservation. Please contact " 
                  . antispambot(get_option('admin_email')) . " with this error.";
             wp_die();                
