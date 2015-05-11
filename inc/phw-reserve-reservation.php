@@ -286,7 +286,6 @@ class PHWReserveReservationRequest {
    * @param string $transient_name 
    * @return void
    *
-   * @todo option for reply address
    */
    private function send_auth_code_email($transient_name) {
       $conf_url = get_permalink() . '?method=handle_auth_code_submission&amp;transient=' . $transient_name . '&amp;auth_code=' . $this->auth_code;
@@ -425,7 +424,6 @@ class PHWReserveReservationRequest {
    * @param int $res_id The reservation id matching the res_id column in table
    * @return void
    *
-   * @todo option for reply address
    * @todo option for message text
    */
    private function send_confirmed_email($res_id) {
@@ -493,7 +491,6 @@ class PHWReserveReservationRequest {
    * @return mixed $res_data All of a reservation's data from the table
    * @since 1.0
    *
-   * @todo replace $res_id parameter with $this->res_id
    */
    public function get_res_data($res_id) {
       $query = "SELECT * FROM {$this->wpdb->phw_reservations} WHERE res_id = %d";
@@ -513,7 +510,6 @@ class PHWReserveReservationRequest {
    * @return string $auth_code A reservation's authorization code
    * @since 1.0
    *
-   * @todo? replace $res_id parameter with $this->res_id  
    */
    public function get_res_auth_code($res_id) {
       $query = "SELECT auth_code FROM {$this->wpdb->phw_reservations} WHERE res_id = %d";
@@ -536,7 +532,6 @@ class PHWReserveReservationRequest {
    * @return void
    * @since 1.0
    *
-   * @todo? replace $res_id parameter with $this->res_id  
    */  
    public function del_res($res_id) {
       if ($this->recurs) {

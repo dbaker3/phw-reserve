@@ -290,7 +290,6 @@ class PHWReserveSettings {
    /**
    * Cleans up whitespace from user's settings input
    * @since 1.0
-   * @todo Any necessary validation/sanitizing
    * @return mixed $input the values from the form fields
    */
    public function phwreserve_sanitize_callback($input) {

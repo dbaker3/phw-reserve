@@ -130,9 +130,7 @@ class PHWReservePageController {
    *
    * @since 1.0
    * @todo kinda smells...should time-check be moved to validate_inputs?
-   * @todo DRY new res submission and edit res submission
    *
-   * @todo add recurs to new reservations
    */
    private function handle_new_res_submission() { 
       $form = new PHWReserveForm($this->rooms, $this->valid_emails);
@@ -248,7 +246,6 @@ class PHWReservePageController {
    * Also deletes the transient after inserting res into table 
    *
    * @since 1.0
-   * @todo Should I load these GET variables beforehand?
    */
    private function handle_auth_code_submission() {
       $transient_name = isset($_GET['transient']) ? $_GET['transient'] : null; 

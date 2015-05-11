@@ -7,7 +7,6 @@
 * @license https://www.gnu.org/licenses/gpl-2.0.html GNU Public License v2
 * @since 1.0
 *
-* @todo make more clear distinction between edit and new
 */
 
 
@@ -253,7 +252,6 @@ class PHWReserveForm {
    * 
    * @since 1.0
    *
-   * @todo clean up edit/new buttons, inputs, etc
    */
    public function display_form($editing = false) { ?>
       <div class="welshimer-form">
