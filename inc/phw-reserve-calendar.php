@@ -113,10 +113,10 @@ class PHWReserveCalendar {
       $query = "SELECT res_id, datetime_start, datetime_end, patron_name, patron_email, purpose, auth_code
                 FROM {$wpdb->phw_reservations}
                 WHERE 
-                '{$this->cal_room}' = room AND
-                FROM_UNIXTIME({$this->cal_month_timestamp}, '%c') = FROM_UNIXTIME(datetime_start, '%c')
+                %s = room AND
+                FROM_UNIXTIME(%d, '%%c') = FROM_UNIXTIME(datetime_start, '%%c')
                 ORDER BY datetime_start";
-      
+      $query = $wpdb->prepare($query, $this->cal_room, $this->cal_month_timestamp);
       $result_res = $wpdb->get_results($query, ARRAY_A);
 
       // Recurring reservations from recur table
@@ -129,10 +129,10 @@ class PHWReserveCalendar {
                 FROM {$wpdb->phw_reservations_recur}, {$wpdb->phw_reservations}
                 WHERE 
                 {$wpdb->phw_reservations_recur}.res_id = {$wpdb->phw_reservations}.res_id AND
-                '{$this->cal_room}' = {$wpdb->phw_reservations}.room AND
-                FROM_UNIXTIME({$this->cal_month_timestamp}, '%c') = FROM_UNIXTIME({$wpdb->phw_reservations_recur}.r_datetime_start, '%c')
+                %s = {$wpdb->phw_reservations}.room AND
+                FROM_UNIXTIME(%d, '%%c') = FROM_UNIXTIME({$wpdb->phw_reservations_recur}.r_datetime_start, '%%c')
                 ORDER BY {$wpdb->phw_reservations_recur}.r_datetime_start";
-
+      $query = $wpdb->prepare($query, $this->cal_room, $this->cal_month_timestamp);
       $result_rec = $wpdb->get_results($query, ARRAY_A);
       $merged = array_merge($result_res, $result_rec);
       
