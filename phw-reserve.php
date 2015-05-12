@@ -41,9 +41,11 @@ add_shortcode('phw-reserve-page', 'phw_reserve_shortcode');
 * @since 1.0
 */
 function phwreserve_enqueue_files() {
-   wp_enqueue_style('phwreserve_css', plugins_url('css/phwreserve.css', __FILE__), array(), filemtime(dirname(__FILE__) . '/css/phwreserve.css'), 'all');
-   wp_enqueue_script('phwreserve_js', plugins_url('js/phwreserve.js', __FILE__), array('jquery'), filemtime(dirname(__FILE__) . '/js/phwreserve.js'), false);
-   wp_enqueue_script('timepicker_js', plugins_url('timepicker/jquery.timepicker.min.js', __FILE__), array('jquery'), filemtime(dirname(__FILE__) . '/timepicker/jquery.timepicker.min.js'), false);
-   wp_enqueue_style('timepicker_css', plugins_url('timepicker/jquery.timepicker.css', __FILE__), array(), filemtime(dirname(__FILE__) . '/timepicker/jquery.timepicker.css'), 'all');
+   if (has_shortcode(get_post_field('post_content', get_the_ID()), "phw-reserve-page")) {
+      wp_enqueue_style('phwreserve_css', plugins_url('css/phwreserve.css', __FILE__), array(), filemtime(dirname(__FILE__) . '/css/phwreserve.css'), 'all');
+      wp_enqueue_script('phwreserve_js', plugins_url('js/phwreserve.js', __FILE__), array('jquery'), filemtime(dirname(__FILE__) . '/js/phwreserve.js'), false);
+      wp_enqueue_script('timepicker_js', plugins_url('timepicker/jquery.timepicker.min.js', __FILE__), array('jquery'), filemtime(dirname(__FILE__) . '/timepicker/jquery.timepicker.min.js'), false);
+      wp_enqueue_style('timepicker_css', plugins_url('timepicker/jquery.timepicker.css', __FILE__), array(), filemtime(dirname(__FILE__) . '/timepicker/jquery.timepicker.css'), 'all');
+   }
 }
 add_action('wp_enqueue_scripts', 'phwreserve_enqueue_files');
