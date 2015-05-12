@@ -180,13 +180,16 @@ class PHWReserveSettings {
  
  
    /**
-   * Writes HTML for rooms setting
+   * Writes HTML for rooms setting.
+   * Allows grouping rooms with HTML <optgroup> tags
    * @since 1.0
    */
    public function phwreserve_rooms_callback($args) {
       $rooms = explode("\n", self::$settings['rooms']);
 
-      $html = "<p>This list contains all rooms available for reservation.<br>Enter one room name per line.</p>";
+      $html = "<p>This list contains all rooms available for reservation.</p>";
+      $html .= "<p>You may optionally group certain rooms by surrounding them with HTML optgroup tags: <pre>&lt;optgroup label='Location Name'&gt;<br>Study Room 1<br>Study Room 2<br>&lt;/optgroup&gt;</pre></p>";
+      $html .= "<p>Enter one room name or optgroup tag per line</p>";
       $html .= "<p><textarea name='phwreserve_settings[rooms]' id='rooms' rows='8' cols='50' spellcheck='false'>";
       foreach ($rooms as $room) {
          $html .= "{$room}\n";

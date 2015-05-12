@@ -46,7 +46,9 @@ class PHWReserveCalendar {
    
    
    /**
-   * Displays HTML for room and month form
+   * Displays HTML for room and month form.
+   * Checks room list for any included <optgroup> tags and deals with those
+   * accordingly. 
    *
    * @since 1.0
    */
@@ -57,9 +59,12 @@ class PHWReserveCalendar {
             <label class="label" for="cal_room">Room:</label>
             <select class="text three-fourths" name='room' id='cal_room' required>
                <?php foreach ($this->rooms as $room) { 
-               echo "<option";
-               if ($room == $this->cal_room) {echo " selected";};
-               echo ">{$room}</option>";
+                  if (!preg_match("/<\/?optgroup[^<]*/", $room)) { 
+                     echo "<option";
+                     if ($room == $this->cal_room) {echo " selected";};
+                     echo ">{$room}</option>";
+                  } 
+                  else echo $room; // "<optgroup label='Branch Location'>" and "</optgroup>"
                } ?>
             </select>
             </p>
