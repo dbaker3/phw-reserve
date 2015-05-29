@@ -271,7 +271,6 @@ class PHWReserveForm {
 		<?php endif; ?>
          
       <form action="<?php the_permalink(); ?>" method="post">
-         <?php if ($editing) { echo "<p class='form'><label class='label' for='del_res'>Cancel Reservation</label><input type='checkbox' id='del_res' name='del_res'></p>"; } ?>
 			<p class="form"><label class="label" for="patron_name">Name:* </label><input tabindex="1" class="text three-fourths<?php if(isset($this->nameError)){echo ' fail';}?>" type="text" id="patron_name" name="patron_name" value="<?php if(isset($this->patron_name)){echo $this->patron_name;} ?>" <?php if($editing){echo 'readonly';} ?>/></p>
 			<p class="form"><label class="label" for="patron_email">Email:* </label><input tabindex="2" class="text three-fourths<?php if(isset($this->emailError)){echo ' fail';}?>" type="email" id="patron_email" name="patron_email" value="<?php if(isset($this->patron_email)){echo $this->patron_email;} ?>" <?php if($editing){echo 'readonly';} ?>/></p>
 			<p class="form"><label class="label" for="time_date">Date:* </label><input tabindex="3" class="text half<?php if(isset($this->dateError)){echo ' fail';}?>" type="text" id="time_date" name="time_date" value="<?php if($this->time_date_valid){echo date('n/j/Y', $this->time_date_valid);} ?>" /></p>
@@ -302,6 +301,7 @@ class PHWReserveForm {
             <p class="form"><label class="label" for="recurs_until">Recurs until:* </label><input type="text" class="text half <?php if(isset($this->recurs_until_error)){echo ' fail';}?>" id="recurs_until" name="recurs_until" value="<?php if($this->recurs_until_valid){echo date('n/j/Y', $this->recurs_until_valid);} ?>"></p>
             </div><?php
          } 
+         if ($editing) { echo "<p class='form'><label class='label' for='del_res'><strong>Cancel Reservation</strong></label><input type='checkbox' id='del_res' name='del_res'></p>"; }
          if ($editing) {
             echo "<input class='submit full' type='submit' name='submit_edit' value='Save Changes' tabindex='11' >"
                  . "<input type='hidden' name='method' value='handle_edit_res_submission'>"
