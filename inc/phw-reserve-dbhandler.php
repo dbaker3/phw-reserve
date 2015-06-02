@@ -1,131 +1,174 @@
 <?php
 /**
-* Contains PHWReserveReservationRequest class
+* Contains PHWReserveDBHandler class
 * 
 * @author David Baker
 * @copyright 2015 Milligan College
 * @license https://www.gnu.org/licenses/gpl-2.0.html GNU Public License v2
-* @since 1.0
+* @since 1.1
 */
 
 
 /**
-* Reservation Requests
+* Database Handler
 *
-* Represents the reservation request. It verifies date/time, handles
-* authorization of requestor, sends appropriate emails to requestor, and communicates
-* with the WP database table, pwh_reservations.
+* Communicates with the WP database tables on behalf of other classes
+* Use: PHWReserveDBHandler::get_instance()->some_method();
 *
-* @since 1.0
+* @since 1.1
 */
-class PHWReserveReservationRequest {
-   private $res_id;
-   private $patron_name;
-   private $patron_email;
-   private $datetime_start;
-   private $datetime_end;
-   private $room;
-   private $purpose;
-   private $auth_code;
-   private $recurs;
-   private $recurs_until;
-   private $recurs_on;
-   private $wpdb;
+class PHWReserveDBHandler {
+   private static $instance; 
+   private static $wpdb;
+    
   
-   // Plugin settings
-   private $temp_res_len;
-   private $keep_old_len;
-   private $email_cust;
-   private $reply_to;
+   /**
+   * Initializes wpdb
+   *
+   * @since 1.1
+   *
+   * @return void
+   */
+   protected function __construct() {
+      echo "<br>inside construct";
+      global $wpdb;
+      self::$wpdb =& $wpdb;
+      self::$wpdb->phw_reservations = self::$wpdb->prefix . "phw_reservations";
+      self::$wpdb->phw_reservations_recur = self::$wpdb->prefix . "phw_reservations_recur";
+   }
+   
    
    /**
-   * Sets up reservation properties
-   *
-   * @param string $name
-   * @param string $email
-   * @param string $start Unix timestamp of start date/time
-   * @param string $end Unix timestamp of start date/time
-   * @param string $room
-   * @param string $purpose Reason requestor is reserving room
-   * @param string $auth_code should be empty string
-   * @param boolean $recurs
-   * @param string $recurs_until
-   * @param mixed array $recurs_on
+   * Returns the Singleton instance of this class
+   * 
+   * @return PHWReserveDBHandler $instance
+   * @since 1.1
+   */
+   public static function get_instance() {
+      echo "<br>inside get_instance";
+      static $instance = null;
+      if (null === $instance) {
+         $instance = new static();
+      }
+
+      return $instance;
+   }
+
+
+   /**
+   * Check for conflicting confirmed reservations
+   * 
+   * @return boolean
+   * @since 1.1
+   */
+   public static function chk_conflicting_confirmed_res($start, $end, $room, $res_id) {
+      echo "<br>inside chk_conflicting_confirmed_res";
+      $query = "SELECT res_id FROM " . self::$wpdb->phw_reservations .
+               " WHERE %d < datetime_end
+                AND %d > datetime_start
+                AND %s = room
+                AND %d <> res_id;";
+      $query = self::$wpdb->prepare($query, $start, $end, $room, $res_id);
+      var_dump($query);
+      return self::$wpdb->query($query);
+   }
+   
+   /**
+   * Check for conflicting unconfirmed reservations (transients)
+   * 
+   * @return boolean
+   * @since 1.1
+   */
+   public static function chk_conflicting_unconfirmed_res($start, $end, $room) {
+      echo "<br>inside chk_conflicting_unconfirmed_res";
+      $unconfirmed = self::get_unconfirmed_res();
+      foreach ($unconfirmed as $result) {
+         $option_name = $result['option_name'];
+         $transient_name = str_replace('_transient_', '', $option_name);
+         $transient_data = get_transient($transient_name);
+         if ($start < $transient_data['datetime_end'] &&
+                  $end > $transient_data['datetime_start'] &&
+                  $room == $transient_data['room']) {
+            return true;
+         }
+      }
+      return false;
+   }
+   
+   /**
+   * Check conflicting recurring reservations
+   * 
+   * @return boolean
+   * @since 1.1
+   */
+   public static function chk_conflicting_recurring_res($start, $end, $room) {
+      echo "<br>inside chk_conflicting_recurring_res";
+      $res_table = self::$wpdb->phw_reservations;
+      $recur_table = self::$wpdb->phw_reservations_recur;
+      $query = "SELECT recur_id 
+                FROM (SELECT {$recur_table}.recur_id,
+                             {$recur_table}.r_datetime_start,
+                             {$recur_table}.r_datetime_end,
+                             {$res_table}.room
+                      FROM {$res_table},
+                           {$recur_table}
+                      WHERE {$res_table}.res_id =
+                            {$recur_table}.res_id
+                     ) AS recurring_reservations_set
+                WHERE %s = room
+                AND %d < r_datetime_end
+                AND %d > r_datetime_start";
+      $query = self::$wpdb->prepare($query, $room, $start, $end);
+      return self::$wpdb->query($query);
+   }
+   
+
+   /**
+   * Returns array of unconfirmed (transients) reservations
+   * 
+   * @return mixed 
+   * @since 1.1
+   */
+   public static function get_unconfirmed_res() {
+      echo "<br>inside get_unconfirmed_res";
+      self::delete_expired_transients();
+      $query = "SELECT option_name
+                FROM " . self::$wpdb->prefix . "options
+                WHERE option_name LIKE '%transient_phwreserve%'";
+      return self::$wpdb->get_results($query, ARRAY_A);
+   }
+ 
+   
+   /**
+   * Finds and deletes expired transients created by this plugin
    *
    * @since 1.0
    *
    * @return void
    */
-   public function __construct($name = '', $email = '', $start = '', $end = '', 
-                               $room = '', $purpose = '', $auth_code = '', 
-                               $recurs = false, $recurs_until = '', $recurs_on = '') {
-      $this->res_id = 0;
-      $this->patron_name = $name;
-      $this->patron_email = $email;
-      $this->datetime_start = $start;
-      $this->datetime_end = $end;
-      $this->room = $room;
-      $this->purpose = $purpose;
-      $this->auth_code = $auth_code;
-      $this->recurs = $recurs;
-      $this->recurs_until = $recurs_until;
-      $this->recurs_on = json_encode($recurs_on);
-  
-      global $wpdb;
-      $this->wpdb =& $wpdb;
-      $this->wpdb->phw_reservations = "{$this->wpdb->prefix}phw_reservations";
-      $this->wpdb->phw_reservations_recur = "{$this->wpdb->prefix}phw_reservations_recur";
-
-      $this->load_plugin_settings();
+   private static function delete_expired_transients() {
+      $cur_time = time();
+      $querySelectTimeouts = "SELECT option_name, option_value
+                              FROM " . self::$wpdb->prefix . "options
+                              WHERE option_name LIKE '%transient_timeout_phwreserve%'
+                              AND option_value < {$cur_time};";
+      $expiredTransients = self::$wpdb->get_results($querySelectTimeouts, ARRAY_A);
+      if ($expiredTransients) {
+         foreach ($expiredTransients as $transient) {
+            $option_name = str_replace('_timeout', '', $transient['option_name']);
+            delete_transient($option_name);
+         } 
+      }
    }
-
+  
    
-   /**
-   * Sets reservation properties
-   *
-   * Use this if you didn't set properties with constructor. As of 1.0 only used
-   * by PHWReservePageController::handle_edit_res_submission(). Might be able to 
-   * get rid of this method if that one is restructured.
-   *
-   * @param int $res_id
-   * @param string $name
-   * @param string $email
-   * @param int $start
-   * @param int $end
-   * @param string $room
-   * @param string $purpose
-   * @param string $auth
-   * @since 1.0
-   *
-   */
-   public function set_properties($res_id, $name, $email, $start, $end, $room, $purpose, 
-                                  $auth, $recurs, $recurs_until, $recurs_on) {
-      $this->res_id = $res_id;
-      $this->patron_name = $name;
-      $this->patron_email = $email;
-      $this->datetime_start = $start;
-      $this->datetime_end = $end;
-      $this->room = $room;
-      $this->purpose = $purpose;
-      $this->auth_code = $auth;
-      $this->recurs = $recurs;
-      $this->recurs_until = $recurs_until;
-      $this->recurs_on = json_encode($recurs_on);
-   }
-  
+/* @todo Factor out DB code from below methods 
+*
+*       |  
+*       |
+*       v
+*/
 
-   /**
-   * Loads plugin settings
-   * @since 1.0
-   */
-   private function load_plugin_settings() {
-      $option_name = PHWReserveSettings::get_option_name();
-      $settings = get_option($option_name);
-      $this->temp_res_len = $settings['temp_res_len'];
-      $this->keep_old_len = $settings['keep_old_len'];
-      $this->email_cust = $settings['email_cust'];
-      $this->reply_to = $settings['reply_to'];
-   }
 
 
    /**
@@ -152,119 +195,55 @@ class PHWReserveReservationRequest {
          $start = $this->datetime_start;
          $end = $this->datetime_end;
       }
-      $conflicting = PHWReserveDBHandler::get_instance()->chk_conflicting_confirmed_res($start, $end, $this->room, $this->res_id);
-      if (!$conflicting) 
-         $conflicting = PHWReserveDBHandler::get_instance()->chk_conflicting_unconfirmed_res($start, $end, $this->room);
-      if (!$conflicting) 
-         $conflicting = PHWReserveDBHandler::get_instance()->chk_conflicting_recurring_res($start, $end, $this->room);
-      var_dump($conflicting);
+
+      // against confirmed reservations
+      $query = "SELECT res_id FROM {$this->wpdb->phw_reservations}
+                WHERE %d < datetime_end
+                AND %d > datetime_start
+                AND %s = room
+                AND %d <> res_id;";
+      $query = $this->wpdb->prepare($query, $start, $end, $this->room, $this->res_id);
+      $conflicting = $this->wpdb->query($query);
+      
+      // against unconfirmed reservations (transients)
+      if (!$conflicting) {
+         $this->delete_expired_transients();
+         $query = "SELECT option_name
+                   FROM {$this->wpdb->prefix}options
+                   WHERE option_name LIKE '%transient_phwreserve%'";
+         $results = $this->wpdb->get_results($query, ARRAY_A);
+         foreach ($results as $result) {
+            $option_name = $result['option_name'];
+            $transient_name = str_replace('_transient_', '', $option_name);
+            $transient_data = get_transient($transient_name);
+            if ($start < $transient_data['datetime_end'] &&
+                     $end > $transient_data['datetime_start'] &&
+                     $this->room == $transient_data['room']) {
+               $conflicting = true;
+               break;
+            }
+         }
+      }
+      // against recurring reservations
+      if (!$conflicting) {
+         $query = "SELECT recur_id 
+                   FROM (SELECT {$this->wpdb->phw_reservations_recur}.recur_id,
+                                {$this->wpdb->phw_reservations_recur}.r_datetime_start,
+                                {$this->wpdb->phw_reservations_recur}.r_datetime_end,
+                                {$this->wpdb->phw_reservations}.room
+                         FROM {$this->wpdb->phw_reservations},
+                              {$this->wpdb->phw_reservations_recur}
+                         WHERE {$this->wpdb->phw_reservations}.res_id =
+                               {$this->wpdb->phw_reservations_recur}.res_id
+                        ) AS recurring_reservations_set
+                   WHERE %s = room
+                   AND %d < r_datetime_end
+                   AND %d > r_datetime_start";
+         $query = $this->wpdb->prepare($query, $this->room, $start, $end);
+         $conflicting = $this->wpdb->query($query);
+      }
+
       return $conflicting;
-   }
-
-
-   /**
-   * Checks each recur instance for time conflict
-   *
-   *
-   */
-   public function check_recur_time_conflict() {
-      $recurring_dates = $this->get_recurring_dates(date('m/d/Y', $this->datetime_start),
-                                             date('m/d/Y', $this->recurs_until),
-                                             json_decode($this->recurs_on));
-      $conflicting_datetimes = array();
-      foreach ($recurring_dates as $recdate) {
-         $r_datetime_start = strtotime(date("Ymd", $recdate) . 't' . date("His", $this->datetime_start));
-         $r_datetime_end =  strtotime(date("Ymd", $recdate) . 't' . date("His", $this->datetime_end));
-
-         if ($this->check_time_conflict($r_datetime_start, $r_datetime_end)) {
-            array_push($conflicting_datetimes, date('n/d/Y', $r_datetime_start));
-         };
-      }
-      return $conflicting_datetimes;
-   }
-
-
-
-
-   /**
-   * Saves reservation request and prepares authorization code for emailing
-   *
-   * Generates an authorization code. Current reservation request is saved, along
-   * with auth code, in a transient. 
-   *
-   * Calls the send_auth_code_email() method.
-   * @since 1.0
-   *
-   * @return void
-   */
-   public function authenticate_user() {
-      $this->create_auth_code();
-      
-      $transient_name = 'phwreserve_' . time();
-      $transient_data = array('patron_name'    => $this->patron_name,
-                              'patron_email'   => $this->patron_email, 
-                              'datetime_start' => $this->datetime_start, 
-                              'datetime_end'   => $this->datetime_end, 
-                              'room'           => $this->room, 
-                              'purpose'        => $this->purpose, 
-                              'auth_code'      => $this->auth_code);
-      set_transient($transient_name, $transient_data, ($this->temp_res_len * HOUR_IN_SECONDS));
-      
-      $this->send_auth_code_email($transient_name);
-   }
-
-   
-   /**
-   * Creates authorization code for a reservation
-   *
-   * Creates code and saves it to the auth_code property of the current 
-   * PHWReserveReservationRequest object. Codes are the last 14 digits of an
-   * MD5 hash of a pseudo-random number.
-   *
-   * @since 1.0
-   */
-   public function create_auth_code() {
-      $this->auth_code = substr(md5(mt_rand()), -14);  
-   }
-   
-   
-   /**
-   * Generates and sends email contaiing authorization URL to requestor.
-   *
-   * The URL contains the name of the transient containing both the reservation
-   * data and the previously generated authorization code. The authorization code
-   * is also embedded into the URL.
-   *
-   * The auth code is used by the page controller class to verify that the email
-   * account entered into the form is accessible by the requestor.
-   *
-   * @since 1.0
-   *
-   * @uses wp_mail
-   * @param string $transient_name 
-   * @return void
-   *
-   */
-   private function send_auth_code_email($transient_name) {
-      $conf_url = get_permalink() . '?method=handle_auth_code_submission&amp;transient=' . $transient_name . '&amp;auth_code=' . $this->auth_code;
-   	$emailTo = $this->patron_email;
-		$subject =  'Please confirm your room reservation request';
-		$body = '<h3>Please click the following link to confirm your room reservation request made ' . date("F j, Y, g:i a") .'</h3>';
-      $body .= "<p><a href='{$conf_url}'>{$conf_url}</a></p>";
-		$body .= '<p><strong>Requested by: </strong>' . $this->patron_name . ' [' . $this->patron_email . ']<br />';
-		$body .= '<strong>Date: </strong>' . date('D, M j, Y', $this->datetime_start) . ' from ' . date('g:i A', $this->datetime_start) . ' - ' . date('g:i A', $this->datetime_end) . '<br />';
-		$body .= '<strong>For: </strong>' . $this->purpose . '<br />';
-		$body .= '<strong>Room: </strong>' . $this->room . '</p>';
-
-		$headers[] = 'From: Room Reservation Webform <' . $this->reply_to . '>';
-		$headers[] = 'Reply-To: ' . $this->reply_to;
-		$headers[] = 'content-type: text/html';
-
-		if (wp_mail( $emailTo, $subject, $body, $headers )) {
-         echo "<h2>Please Confirm</h2>";
-         echo "<p>An email has been sent to {$this->patron_email}. <strong>You must visit the link contained in the email to confirm your reservation</strong>.</p>";
-         echo "<p><strong>Note:</strong> If you do not click the link your request will expire and the reservation will be canceled.</p>";
-      }
    }
 
    
@@ -419,27 +398,7 @@ class PHWReserveReservationRequest {
    }
 
    
-   /**
-   * Finds and deletes expired transients created by this plugin
-   *
-   * @since 1.0
-   *
-   * @return void
-   */
-   private function delete_expired_transients() {
-      $cur_time = time();
-      $querySelectTimeouts = "SELECT option_name, option_value
-                              FROM {$this->wpdb->prefix}options
-                              WHERE option_name LIKE '%transient_timeout_phwreserve%'
-                              AND option_value < {$cur_time};";
-      $expiredTransients = $this->wpdb->get_results($querySelectTimeouts, ARRAY_A);
-      if ($expiredTransients) {
-         foreach ($expiredTransients as $transient) {
-            $option_name = str_replace('_timeout', '', $transient['option_name']);
-            delete_transient($option_name);
-         } 
-      }
-   }
+
    
    
    /**
