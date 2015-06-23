@@ -276,34 +276,27 @@ class PHWReserveReservationRequest {
    *
    * @since 1.0
    */
-   public function insert_into_db() {
-      $query_get_res_id = "SELECT res_id FROM {$this->wpdb->phw_reservations} 
-                           WHERE datetime_start = %d 
-                           AND room = %s";
-      $query_get_res_id = $this->wpdb->prepare($query_get_res_id, $this->datetime_start, $this->room);
-      if ($this->wpdb->get_results($query_get_res_id)) {
+   public function insert_into_db() { 
+      if (PHWReserveDBHandler::get_instance()->get_res_id($this->datetime_start, $this->room)) {
          echo "This reservation has been confirmed.";
       }
       else {
-         $success = $this->wpdb->insert($this->wpdb->phw_reservations, 
-                             array(
-                                'patron_name'    => $this->patron_name,
-                                'patron_email'   => $this->patron_email,
-                                'datetime_start' => $this->datetime_start,
-                                'datetime_end'   => $this->datetime_end,
-                                'purpose'        => $this->purpose,
-                                'room'           => $this->room,
-                                'auth_code'      => $this->auth_code,
-                                'recurs'         => $this->recurs,
-                                'recurs_until'   => $this->recurs_until,
-                                'recurs_on'      => $this->recurs_on
-                             ));
+         $success = PHWReserveDBHandler::get_instance()->insert_res($this->patron_name,
+                                                                    $this->patron_email,
+                                                                    $this->datetime_start,
+                                                                    $this->datetime_end,
+                                                                    $this->purpose,
+                                                                    $this->room,
+                                                                    $this->auth_code,
+                                                                    $this->recurs,
+                                                                    $this->recurs_until,
+                                                                    $this->recurs_on);
          if (!$success) {
             echo "There was an error inserting data into the database. Please contact " . antispambot(get_option('admin_email')) . " with this error.";
             wp_die();
          }
         
-         $res_id = $this->wpdb->get_results($query_get_res_id);
+         $res_id = PHWReserveDBHandler::get_instance()->get_res_id($this->datetime_start, $this->room);
          $res_id = $res_id[0]->res_id;
         
          if ($this->recurs) {

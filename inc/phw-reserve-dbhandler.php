@@ -162,7 +162,46 @@ class PHWReserveDBHandler {
    }
   
    
-/* @todo Factor out DB code from below methods 
+  /**
+   * Returns res_id based on start date/time and room if exists
+   * 
+   * @since 1.1
+   */
+   public static function  get_res_id($datetime_start, $room) {
+      $table = self::$wpdb->phw_reservations;
+      $query_get_res_id = "SELECT res_id FROM {$table} 
+                           WHERE datetime_start = %d 
+                           AND room = %s";
+      $query_get_res_id = self::$wpdb->prepare($query_get_res_id, $datetime_start, $room);
+      return self::$wpdb->get_results($query_get_res_id);
+   }
+
+   /**
+   * Inserts new reservation into database
+   * 
+   * Returns number of rows affected or false
+   * 
+   * @since 1.1
+   */
+   public static function insert_res($patron_name, $patron_email, $datetime_start,
+                                     $datetime_end, $purpose, $room, $auth_code,
+                                     $recurs, $recurs_until, $recurs_on ) {
+      return self::$wpdb->insert(self::$wpdb->phw_reservations, 
+                             array(
+                                'patron_name'    => $patron_name,
+                                'patron_email'   => $patron_email,
+                                'datetime_start' => $datetime_start,
+                                'datetime_end'   => $datetime_end,
+                                'purpose'        => $purpose,
+                                'room'           => $room,
+                                'auth_code'      => $auth_code,
+                                'recurs'         => $recurs,
+                                'recurs_until'   => $recurs_until,
+                                'recurs_on'      => $recurs_on
+                             ));
+   }
+
+ /* @todo factor out db code from below methods 
 *
 *       |  
 *       |
@@ -170,128 +209,6 @@ class PHWReserveDBHandler {
 */
 
 
-
-   /**
-   * Returns true if requested time conflicts with an existing reservation
-   *
-   * Checks the database table phw_reservations for any confirmed reservations
-   * that conflict with the requested date/time and room, and returns true if 
-   * found. If false, checks for conflicts with as-of-yet confirmed requests 
-   * that exist only as transients awaiting confirmation. Returns true if found.
-   *
-   * Will ignore the reservation if $res_id is set. This allows adjusting
-   * the time of an existing reservation (via an edit) without it reporting a 
-   * conflict.
-   *
-   * Also deletes expired transients prior to checking for conflicting transients
-   * 
-   * @since 1.0
-   * @return boolean
-   *
-   * @todo check time conflict with Today's Hours widget if available
-   */
-   public function check_time_conflict($start = null, $end = null) {
-      if ($start === null || $end === null) {
-         $start = $this->datetime_start;
-         $end = $this->datetime_end;
-      }
-
-      // against confirmed reservations
-      $query = "SELECT res_id FROM {$this->wpdb->phw_reservations}
-                WHERE %d < datetime_end
-                AND %d > datetime_start
-                AND %s = room
-                AND %d <> res_id;";
-      $query = $this->wpdb->prepare($query, $start, $end, $this->room, $this->res_id);
-      $conflicting = $this->wpdb->query($query);
-      
-      // against unconfirmed reservations (transients)
-      if (!$conflicting) {
-         $this->delete_expired_transients();
-         $query = "SELECT option_name
-                   FROM {$this->wpdb->prefix}options
-                   WHERE option_name LIKE '%transient_phwreserve%'";
-         $results = $this->wpdb->get_results($query, ARRAY_A);
-         foreach ($results as $result) {
-            $option_name = $result['option_name'];
-            $transient_name = str_replace('_transient_', '', $option_name);
-            $transient_data = get_transient($transient_name);
-            if ($start < $transient_data['datetime_end'] &&
-                     $end > $transient_data['datetime_start'] &&
-                     $this->room == $transient_data['room']) {
-               $conflicting = true;
-               break;
-            }
-         }
-      }
-      // against recurring reservations
-      if (!$conflicting) {
-         $query = "SELECT recur_id 
-                   FROM (SELECT {$this->wpdb->phw_reservations_recur}.recur_id,
-                                {$this->wpdb->phw_reservations_recur}.r_datetime_start,
-                                {$this->wpdb->phw_reservations_recur}.r_datetime_end,
-                                {$this->wpdb->phw_reservations}.room
-                         FROM {$this->wpdb->phw_reservations},
-                              {$this->wpdb->phw_reservations_recur}
-                         WHERE {$this->wpdb->phw_reservations}.res_id =
-                               {$this->wpdb->phw_reservations_recur}.res_id
-                        ) AS recurring_reservations_set
-                   WHERE %s = room
-                   AND %d < r_datetime_end
-                   AND %d > r_datetime_start";
-         $query = $this->wpdb->prepare($query, $this->room, $start, $end);
-         $conflicting = $this->wpdb->query($query);
-      }
-
-      return $conflicting;
-   }
-
-   
-   /**
-   * Insert reservation into phw_reservations table and email confirmation
-   *
-   * Saves the current reservation request into the table and calls the
-   * send_confirmed_email() method 
-   *
-   * @since 1.0
-   */
-   public function insert_into_db() {
-      $query_get_res_id = "SELECT res_id FROM {$this->wpdb->phw_reservations} 
-                           WHERE datetime_start = %d 
-                           AND room = %s";
-      $query_get_res_id = $this->wpdb->prepare($query_get_res_id, $this->datetime_start, $this->room);
-      if ($this->wpdb->get_results($query_get_res_id)) {
-         echo "This reservation has been confirmed.";
-      }
-      else {
-         $success = $this->wpdb->insert($this->wpdb->phw_reservations, 
-                             array(
-                                'patron_name'    => $this->patron_name,
-                                'patron_email'   => $this->patron_email,
-                                'datetime_start' => $this->datetime_start,
-                                'datetime_end'   => $this->datetime_end,
-                                'purpose'        => $this->purpose,
-                                'room'           => $this->room,
-                                'auth_code'      => $this->auth_code,
-                                'recurs'         => $this->recurs,
-                                'recurs_until'   => $this->recurs_until,
-                                'recurs_on'      => $this->recurs_on
-                             ));
-         if (!$success) {
-            echo "There was an error inserting data into the database. Please contact " . antispambot(get_option('admin_email')) . " with this error.";
-            wp_die();
-         }
-        
-         $res_id = $this->wpdb->get_results($query_get_res_id);
-         $res_id = $res_id[0]->res_id;
-        
-         if ($this->recurs) {
-            $this->insert_recurring_into_db($res_id); 
-         }
-        
-         $this->send_confirmed_email($res_id);
-      }
-   }
 
    
    /**
