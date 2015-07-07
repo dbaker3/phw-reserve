@@ -281,9 +281,14 @@ class PHWReserveForm {
 			<p class="laylah"><label for="laylah">Required:*</label><input type="text" id="laylah" name="laylah" tabindex="999" /></p>
 			<p class="form"><label class="label" for="reserve_room">Room:* </label><select tabindex="7" class="text half<?php if(isset($this->roomError)){echo ' fail';}?>" id="reserve_room" name="reserve_room" >
 				<option value=''>Select ... </option>
-            <?php foreach ($this->rooms as $room) { ?>
-             <option value="<?php echo $room; ?>"<?php if ($this->reserve_room == $room) echo ' selected="selected"'; ?>><?php echo $room?></option>
-            <?php } ?>
+            <?php foreach ($this->rooms as $room) { 
+               if (!preg_match("/<\/?optgroup[^<]*/", $room)) { 
+                  echo "<option";
+                  if ($room == $this->cal_room) {echo " selected";};
+                     echo ">{$room}</option>";
+               } 
+               else echo $room; // "<optgroup label='Branch Location'>" and "</optgroup>"  
+            } ?>
 			</select>
 			</p>
 			<p class="form">
