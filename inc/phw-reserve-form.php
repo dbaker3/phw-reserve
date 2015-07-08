@@ -279,7 +279,7 @@ class PHWReserveForm {
 
 			<p class="form"><label class="label" for="patron_purpose">Purpose:* </label><input tabindex="6" class="text<?php if(isset($this->purposeError)){echo ' fail';}?>" type="text" id="patron_purpose" name="patron_purpose" value="<?php if(isset($this->patron_purpose)){echo $this->patron_purpose;} ?>" /></p>
 			<p class="laylah"><label for="laylah">Required:*</label><input type="text" id="laylah" name="laylah" tabindex="999" /></p>
-			<p class="form"><label class="label" for="reserve_room">Room:* </label><select tabindex="7" class="text half<?php if(isset($this->roomError)){echo ' fail';}?>" id="reserve_room" name="reserve_room" >
+			<p class="form"><label class="label" for="reserve_room">Room:* </label><select tabindex="7" class="text three-fourths<?php if(isset($this->roomError)){echo ' fail';}?>" id="reserve_room" name="reserve_room" >
 				<option value=''>Select ... </option>
             <?php foreach ($this->rooms as $room) { 
                if (!preg_match("/<\/?optgroup[^<]*/", $room)) { 
