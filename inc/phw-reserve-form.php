@@ -100,6 +100,7 @@ class PHWReserveForm {
    	$this->time_date = trim($_POST['time_date']);
     	$this->time_start = trim($_POST['time_start']);
    	$this->time_end = trim($_POST['time_end']);
+    	if ($this->time_end == "12:00 AM") {$this->time_end = "11:59 PM";}
    	$this->patron_purpose = trim($_POST['patron_purpose']);
    	$this->reserve_room = trim($_POST['reserve_room']);
    	$this->patron_message = trim($_POST['patron_message']);
