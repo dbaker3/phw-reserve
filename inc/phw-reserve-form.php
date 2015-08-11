@@ -284,7 +284,7 @@ class PHWReserveForm {
             <?php foreach ($this->rooms as $room) { 
                if (!preg_match("/<\/?optgroup[^<]*/", $room)) { 
                   echo "<option";
-                  if ($room == $this->cal_room) {echo " selected";};
+                  if ($room == $this->reserve_room) {echo " selected";};
                      echo ">{$room}</option>";
                } 
                else echo $room; // "<optgroup label='Branch Location'>" and "</optgroup>"  
