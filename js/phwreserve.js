@@ -16,7 +16,7 @@ jQuery(document).ready(function() {
                                       'maxTime': '11:30pm',
                                       'timeFormat': 'g:i A'});
    jQuery('#time_end').timepicker({ 'minTime': '8:00am',
-                                    'maxTime': '11:30pm',
+                                    'maxTime': '12:00am',
                                     'timeFormat': 'g:i A'});
   
    // Show days when recurring option selected on form
