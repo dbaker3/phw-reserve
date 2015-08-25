@@ -265,7 +265,7 @@ class PHWReservePageController {
       }
       else {
          echo '<p><strong>Error:</strong> Your authorization code does not match this reservation, 
-               or your email link has expired. If you belive you have incorrectly received this error, 
+               or your email link has expired. If you believe you have incorrectly received this error, 
                please contact ' . antispambot(get_option('admin_email')) . '</p>';
       }
    }
