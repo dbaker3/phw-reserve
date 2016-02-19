@@ -59,6 +59,10 @@ class PHWReserveReservationRequest {
    public function __construct($name = '', $email = '', $start = '', $end = '', 
                                $room = '', $purpose = '', $auth_code = '', 
                                $recurs = false, $recurs_until = '', $recurs_on = '') {
+      // Prevent null values in DB								   
+      if (is_null($recurs)) $recurs = false;
+      if (is_null($recurs_until)) $recurs_until = '';
+	  
       $this->res_id = 0;
       $this->patron_name = $name;
       $this->patron_email = $email;
@@ -342,6 +346,18 @@ class PHWReserveReservationRequest {
                              ));
          if (!$success) {
             echo "There was an error inserting data into the database. Please contact " . antispambot(get_option('admin_email')) . " with this error.";
+            echo "<pre>";
+            var_dump($this->patron_name);
+            var_dump($this->patron_email);	
+            var_dump($this->datetime_start);
+            var_dump($this->datetime_end);	
+            var_dump($this->purpose);
+            var_dump($this->room);	
+            var_dump($this->auth_code);
+            var_dump($this->recurs);	
+            var_dump($this->recurs_until);
+            var_dump($this->recurs_on);
+            echo "</pre>";            
             wp_die();
          }
         
