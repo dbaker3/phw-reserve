@@ -49,3 +49,15 @@ function phwreserve_enqueue_files() {
    }
 }
 add_action('wp_enqueue_scripts', 'phwreserve_enqueue_files');
+
+function phwreserve_enqueue_admin_files() {
+   wp_enqueue_style('phwreserve_admin_css', plugins_url('css/phwreserve-admin.css', __FILE__), array(), filemtime(dirname(__FILE__) . '/css/phwreserve-admin.css'), 'all'); 
+}
+add_action('admin_enqueue_scripts', 'phwreserve_enqueue_admin_files');
+
+
+/**
+* In admin pages checks if user is downloading reservation data
+* @since 1.0
+*/
+add_action('admin_init', 'PHWReserveSettings::phwreserve_data_export');

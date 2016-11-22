@@ -17,6 +17,7 @@ class PHWReserveSettings {
    private static $option_name = 'phwreserve_settings';
    private static $option_page = 'phwreserve_settings_page';
    private static $todayshours_option_name = 'todayshours_settings';
+   private static $data_export_field_name = 'phwreserve_data_export';
    private static $settings;
    
    /**
@@ -280,6 +281,7 @@ class PHWReserveSettings {
       <div class="wrap">
          <div id="icon-tools" class="icon32">&nbsp;</div>
          <h2>Room Reservation</h2>
+         <?php self::phwreserve_data_export_section(); ?>
          <form method="post" action="options.php">
             <?php settings_fields(self::$option_page);?>
             <?php do_settings_sections(self::$option_page);?>
@@ -288,7 +290,69 @@ class PHWReserveSettings {
       </div>
    <?php
    }
+  
    
+   /**
+   * Writes HTML for data export section
+   * @since 1.0
+   */
+   private function phwreserve_data_export_section() {
+      $html = "<form id='data-dl-form' method='get' action='options-general.php'>";
+      $html.= "   <h3>Export Reservation Data</h3>";
+      $html.= "   <div id='data-dl-label'>";
+      $html.= "   <span>This option will download all reservation as a CSV file</span>";
+      $html.= "      <input type='hidden' name='" . self::$data_export_field_name . "' value='1' />";
+      $html.= "      <input type='hidden' name='page' value='" . self::$option_page . "'>";
+      $html.= "      <input type='submit' value='Download' />";
+      $html.= "   </div>";
+      $html.= "</form>";
+      echo $html;
+   } 
+  
+   /**
+   * Queries db, makes csv file, sends to user as download -- if query fields & values exist
+   * This static function is hooked to admin_init in phw-reserve.php
+   * Attr: Aaron D Campbell http://ran.ge/2009/10/27/howto-create-stream-csv-php/
+   * @since 1.0
+   */
+   public static function phwreserve_data_export() {
+      if ($_GET[self::$data_export_field_name] && $_GET[page] == self::$option_page && current_user_can('manage_options')) {
+         $fileName = 'reserve_data_' . date('Ymd') . '.csv';
+         header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
+         header('Content-Description: File Transfer');
+         header("Content-type: text/csv");
+         header("Content-Disposition: attachment; filename={$fileName}");
+         header("Expires: 0");
+         header("Pragma: public");
+         $fh = @fopen( 'php://output', 'w' );
+ 
+         global $wpdb;
+         $wpdb->phw_reservations = "{$wpdb->prefix}phw_reservations";
+         $wpdb->phw_reservations_recur = "{$wpdb->prefix}phw_reservations_recur";
+         $query = "SELECT res_id, patron_name, patron_email, from_unixtime(datetime_start) as datetime_start, 
+                          from_unixtime(datetime_end) as datetime_end, purpose, room, auth_code, recurs, 
+                          recurs_until, recurs_on
+                   FROM {$wpdb->phw_reservations}
+                   UNION
+                   SELECT r.res_id, r.patron_name, r.patron_email, from_unixtime(rr.r_datetime_start) as datetime_start, 
+                          from_unixtime(rr.r_datetime_end) as datetimedatetime_end, r.purpose, r.room, r.auth_code, r.recurs, 
+                          r.recurs_until, r.recurs_on FROM {$wpdb->phw_reservations} as r
+                   JOIN {$wpdb->phw_reservations_recur} as rr
+                   WHERE r.res_id = rr.res_id";
+         $results = $wpdb->get_results( $query, ARRAY_A );
+        
+         $headerDisplayed = false;
+         foreach ( $results as $data ) {
+            if ( !$headerDisplayed ) {
+               fputcsv($fh, array_keys($data));
+               $headerDisplayed = true;
+            }
+            fputcsv($fh, $data);
+         }
+         fclose($fh);
+         exit;
+      }
+   }
    
    /**
    * Cleans up whitespace from user's settings input

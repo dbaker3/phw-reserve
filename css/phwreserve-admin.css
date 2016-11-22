@@ -1,0 +1,29 @@
+/*
+*  PHW-Reserve
+*  @author David Baker
+*  @copyright 2016 Milligan College
+*  @license https://www.gnu.org/licenses/gpl-2.0.html GNU Public License v2
+*/
+
+/* admin page */
+
+#data-dl-form {
+   width: auto;
+   display: inline-block;
+   margin: 1em 0;
+}
+
+#data-dl-form h3 {
+   display: inline;
+   margin-right: 20px;
+}
+
+#data-dl-label {
+    display: inline-block;
+    vertical-align: top;
+    font-size: 14px;
+}
+
+#data-dl-label input[type="submit"] {
+    display: block;
+}
