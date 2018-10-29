@@ -23,6 +23,7 @@ class PHWReserveForm {
    private $laylah;
    public $patron_name;
    public $patron_email;
+   public $patron_emailconfirm;
    private $time_date;
    private $time_start;
    private $time_end;
@@ -43,6 +44,7 @@ class PHWReserveForm {
    private $honeypotError;
    private $nameError;
    private $emailError;
+   private $emailConfirmError;
    public $dateError;
    public $timeStartError;
    public $timeEndError;
@@ -97,6 +99,7 @@ class PHWReserveForm {
       $this->laylah = trim($_POST['laylah']);
       $this->patron_name = trim($_POST['patron_name']);
    	$this->patron_email = strtolower(trim($_POST['patron_email']));
+   	$this->patron_emailconfirm = strtolower(trim($_POST['patron_emailconfirm']));
    	$this->time_date = trim($_POST['time_date']);
     	$this->time_start = trim($_POST['time_start']);
    	$this->time_end = trim($_POST['time_end']);
@@ -157,6 +160,11 @@ class PHWReserveForm {
          $this->hasError = true;
       } elseif (!is_email($this->patron_email)) {
          $this->emailError = 'You must enter a valid email address.';
+         $this->hasError = true;
+      }
+      
+      if($this->patron_email != $this->patron_emailconfirm) {
+         $this->emailConfirmError = 'Your Email address does not match Confirm Email field.';
          $this->hasError = true;
       }
    
@@ -261,6 +269,7 @@ class PHWReserveForm {
 				<?php if(isset($this->honeypotError)){echo $this->honeypotError . '<br />';}?>
 				<?php if(isset($this->nameError)){echo $this->nameError . '<br />';}?>
 				<?php if(isset($this->emailError)){echo $this->emailError . '<br />';}?>
+				<?php if(isset($this->emailConfirmError)){echo $this->emailConfirmError . '<br />';}?>
 				<?php if(isset($this->dateError)){echo $this->dateError . '<br />';}?>
 				<?php if(isset($this->timeStartError)){echo $this->timeStartError . '<br />';}?>
 				<?php if(isset($this->timeEndError)){echo $this->timeEndError . '<br />';}?>
@@ -274,13 +283,14 @@ class PHWReserveForm {
       <form action="<?php the_permalink(); ?>" method="post">
 			<p class="form"><label class="label" for="patron_name">Name:* </label><input tabindex="1" class="text three-fourths<?php if(isset($this->nameError)){echo ' fail';}?>" type="text" id="patron_name" name="patron_name" value="<?php if(isset($this->patron_name)){echo $this->patron_name;} ?>" <?php if($editing){echo 'readonly';} ?>/></p>
 			<p class="form"><label class="label" for="patron_email">Email:* </label><input tabindex="2" class="text three-fourths<?php if(isset($this->emailError)){echo ' fail';}?>" type="email" id="patron_email" name="patron_email" value="<?php if(isset($this->patron_email)){echo $this->patron_email;} ?>" <?php if($editing){echo 'readonly';} ?>/></p>
-			<p class="form"><label class="label" for="time_date">Date:* </label><input tabindex="3" placeholder="MM/DD/YYYY" class="text half<?php if(isset($this->dateError)){echo ' fail';}?>" type="text" id="time_date" name="time_date" value="<?php if($this->time_date_valid){echo date('n/j/Y', $this->time_date_valid);} ?>" /></p>
-			<p class="form"><label class="label" for="time_start">Start Time:* </label><input tabindex="4" class="text half<?php if(isset($this->timeStartError)){echo ' fail';}?>" type="text" id="time_start" name="time_start" value="<?php if($this->time_start_valid){echo date('g:i A', $this->time_start_valid);} ?>" /></p>
-			<p class="form"><label class="label" for="time_end">End Time:* </label><input tabindex="5" class="text half<?php if(isset($this->timeEndError)){echo ' fail';}?>" type="text" id="time_end" name="time_end" value="<?php if($this->time_end_valid){echo date('g:i A', $this->time_end_valid);} ?>" /></p>
+			<p class="form"><label class="label" for="patron_emailconfirm">Confirm Email:* </label><input tabindex="3" class="text three-fourths<?php if(isset($this->emailConfirmError)){echo ' fail';}?>" type="email" id="patron_emailconfirm" name="patron_emailconfirm" value="<?php if(isset($this->patron_emailconfirm)){echo $this->patron_emailconfirm;} ?>" <?php if($editing){echo 'readonly';} ?>/></p>
+			<p class="form"><label class="label" for="time_date">Date:* </label><input tabindex="4" placeholder="MM/DD/YYYY" class="text half<?php if(isset($this->dateError)){echo ' fail';}?>" type="text" id="time_date" name="time_date" value="<?php if($this->time_date_valid){echo date('n/j/Y', $this->time_date_valid);} ?>" /></p>
+			<p class="form"><label class="label" for="time_start">Start Time:* </label><input tabindex="5" class="text half<?php if(isset($this->timeStartError)){echo ' fail';}?>" type="text" id="time_start" name="time_start" value="<?php if($this->time_start_valid){echo date('g:i A', $this->time_start_valid);} ?>" /></p>
+			<p class="form"><label class="label" for="time_end">End Time:* </label><input tabindex="6" class="text half<?php if(isset($this->timeEndError)){echo ' fail';}?>" type="text" id="time_end" name="time_end" value="<?php if($this->time_end_valid){echo date('g:i A', $this->time_end_valid);} ?>" /></p>
 
-			<p class="form"><label class="label" for="patron_purpose">Purpose:* </label><input tabindex="6" class="text<?php if(isset($this->purposeError)){echo ' fail';}?>" type="text" id="patron_purpose" name="patron_purpose" value="<?php if(isset($this->patron_purpose)){echo $this->patron_purpose;} ?>" /></p>
+			<p class="form"><label class="label" for="patron_purpose">Purpose:* </label><input tabindex="7" class="text<?php if(isset($this->purposeError)){echo ' fail';}?>" type="text" id="patron_purpose" name="patron_purpose" value="<?php if(isset($this->patron_purpose)){echo $this->patron_purpose;} ?>" /></p>
 			<p class="laylah"><label for="laylah">Required:*</label><input type="text" id="laylah" name="laylah" tabindex="999" /></p>
-			<p class="form"><label class="label" for="reserve_room">Room:* </label><select tabindex="7" class="text three-fourths<?php if(isset($this->roomError)){echo ' fail';}?>" id="reserve_room" name="reserve_room" >
+			<p class="form"><label class="label" for="reserve_room">Room:* </label><select tabindex="8" class="text three-fourths<?php if(isset($this->roomError)){echo ' fail';}?>" id="reserve_room" name="reserve_room" >
 				<option value=''>Select ... </option>
             <?php foreach ($this->rooms as $room) { 
                if (!preg_match("/<\/?optgroup[^<]*/", $room)) { 
@@ -349,6 +359,7 @@ class PHWReserveForm {
       $this->res_id = $res_id;
       $this->patron_name = $patron_name;
       $this->patron_email = $patron_email;
+      $this->patron_emailconfirm = $patron_email;
       $this->time_date_valid = $time_start;
       $this->time_start_valid = $time_start;
       $this->time_end_valid = $time_end;
